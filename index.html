@@ -8,17 +8,60 @@
     <link href="./src/assets/css/main.css" rel="stylesheet">
     <link href="./src/assets/css/map.css" rel="stylesheet">
     <link href="./src/assets/css/sidebar.css" rel="stylesheet">
+    <link href="./src/assets/css/details-panel.css" rel="stylesheet">
   </head>
   <body>
     <div class="app-container">
       <main class="app-content">
 
         <aside class="sidebar">
+          <h1 class="text-3xl font-bold underline">
+            Hello world!
+          </h1>
         </aside>
 
         <div id="map" class="map-container"></div>
 
-        <div id="project-details-panel" class="details-panel">
+        <div id="neighborhood-details" class="details-panel">
+          <button class="details-close" aria-label="Close details panel">×</button>
+          <div class="details-content">
+            <div class="details-header">
+              <img class="details-image" src="" alt="" />
+              <h2 class="details-title"></h2>
+            </div>
+            <div class="details-stats">
+              <div class="stat-item">
+                <span class="stat-label">Price Range:</span>
+                <span class="stat-value" id="price-range"></span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-label">Home Types:</span>
+                <span class="stat-value" id="home-types"></span>
+              </div>
+            </div>
+            <div class="details-section">
+              <h3>Amenities</h3>
+              <div class="amenities-list" id="amenities-list"></div>
+            </div>
+            <div class="details-section">
+              <h3>Availability</h3>
+              <div class="availability-stats">
+                <div class="availability-item">
+                  <span class="availability-number" id="homes-count">0</span>
+                  <span class="availability-label">Homes for Sale</span>
+                </div>
+                <div class="availability-item">
+                  <span class="availability-number" id="floorplans-count">0</span>
+                  <span class="availability-label">Floor Plans</span>
+                </div>
+              </div>
+            </div>
+            <div class="details-section">
+              <p class="details-description" id="description"></p>
+            </div>
+            <a href="#" class="details-cta" id="neighborhood-link">View Neighborhood Page</a>
+          </div>
+        </div>
 
         </main>
       </div>
