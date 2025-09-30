@@ -15,6 +15,15 @@
   right: 0 !important;
 }
 
+/* Adjust map container when panel is open */
+.map-container {
+  transition: margin-right 0.3s ease-in-out;
+}
+
+.map-container.panel-open {
+  margin-right: 400px;
+}
+
 .details-close {
   position: absolute;
   top: 1rem;

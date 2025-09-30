@@ -60,7 +60,7 @@ async function loadNeighborhoodsGeojson() {
       'fill-opacity': [
         'case',
         ['boolean', ['feature-state', 'selected'], false],
-        ['get', 'fill-opacity'], // Keep original opacity if selected
+        0.8, // Keep bright when selected
         ['boolean', ['feature-state', 'hover'], false],
         0.8, // Brighten on hover
         ['get', 'fill-opacity'] // Default opacity
@@ -80,15 +80,25 @@ async function loadNeighborhoodsGeojson() {
     }
   });
 
-  // Add hover effect layer (hidden by default, shown on hover)
+  // Add highlight layer for selected polygon
   map.addLayer({
-    id: 'neighborhood-hover',
+    id: 'neighborhood-highlight',
     type: 'line',
     source: 'neighborhoods',
     paint: {
-      'line-color': ['get', 'stroke'],
-      'line-width': 4,
-      'line-opacity': 0
+      'line-color': '#2563eb',
+      'line-width': [
+        'case',
+        ['boolean', ['feature-state', 'selected'], false],
+        4,
+        0
+      ],
+      'line-opacity': [
+        'case',
+        ['boolean', ['feature-state', 'selected'], false],
+        1,
+        0
+      ]
     }
   });
 
@@ -98,6 +108,14 @@ async function loadNeighborhoodsGeojson() {
   // Setup details panel close functionality
   setupDetailsPanelClose();
 }
+
+// Create a reusable popup instance
+const popup = new mapboxgl.Popup({
+  closeButton: false,
+  closeOnClick: false,
+  offset: 15,
+  className: 'neighborhood-popup'
+});
 
 function setupMapInteractions() {
   let hoveredNeighborhoodId = null;
@@ -112,7 +130,7 @@ function setupMapInteractions() {
     map.getCanvas().style.cursor = '';
   });
 
-  // Hover effect - brighten polygon
+  // Hover effect - brighten polygon and show tooltip
   map.on('mousemove', 'neighborhood-fills', (e) => {
     if (e.features.length > 0) {
       if (hoveredNeighborhoodId !== null) {
@@ -126,6 +144,28 @@ function setupMapInteractions() {
         { source: 'neighborhoods', id: hoveredNeighborhoodId },
         { hover: true }
       );
+
+      // Show popup tooltip
+      const properties = e.features[0].properties;
+      const coordinates = e.lngLat;
+
+      // Build popup HTML
+      const priceText = properties.price_range ? `💰 ${properties.price_range}` : '';
+      const homeInfo = properties.new_construction
+        ? '🏗️ New Construction'
+        : (properties.homeType || '');
+
+      const html = `
+        <div class="p-2">
+          <h3 class="font-bold text-base text-gray-900 mb-1">${properties.neighborhood || 'Neighborhood'}</h3>
+          <div class="text-sm text-gray-600 space-y-0.5">
+            ${priceText ? `<p>${priceText}</p>` : ''}
+            ${homeInfo ? `<p>${homeInfo}</p>` : ''}
+          </div>
+        </div>
+      `;
+
+      popup.setLngLat(coordinates).setHTML(html).addTo(map);
     }
   });
 
@@ -137,6 +177,9 @@ function setupMapInteractions() {
       );
     }
     hoveredNeighborhoodId = null;
+
+    // Hide popup
+    popup.remove();
   });
 
   // Click event - select neighborhood
@@ -159,14 +202,53 @@ function setupMapInteractions() {
         { selected: true }
       );
 
+      // Pan map to fit the polygon bounds
+      if (clickedFeature.geometry && clickedFeature.geometry.coordinates) {
+        const bounds = new mapboxgl.LngLatBounds();
+        const coords = clickedFeature.geometry.coordinates[0];
+
+        coords.forEach(coord => {
+          bounds.extend(coord);
+        });
+
+        map.fitBounds(bounds, {
+          padding: 100, // Equal padding on all sides since map will resize
+          maxZoom: map.getZoom(), // Don't zoom in more than current level
+          duration: 800
+        });
+      }
+
       // Show details panel with neighborhood data
       showNeighborhoodDetails(clickedFeature.properties);
+    }
+  });
+
+  // Click outside polygons - deselect and close panel
+  map.on('click', (e) => {
+    const features = map.queryRenderedFeatures(e.point, {
+      layers: ['neighborhood-fills']
+    });
+
+    // If clicked outside any polygon
+    if (features.length === 0) {
+      // Clear selection
+      if (selectedNeighborhoodId !== null) {
+        map.setFeatureState(
+          { source: 'neighborhoods', id: selectedNeighborhoodId },
+          { selected: false }
+        );
+        selectedNeighborhoodId = null;
+      }
+
+      // Close panel
+      closeDetailsPanel();
     }
   });
 }
 
 function showNeighborhoodDetails(neighborhood) {
   const panel = document.getElementById('neighborhood-details');
+  const mapContainer = document.getElementById('map');
 
   if (!panel) {
     console.error('Details panel not found!');
@@ -210,22 +292,34 @@ function showNeighborhoodDetails(neighborhood) {
 
   // Show panel with animation
   panel.classList.add('open');
+  mapContainer.classList.add('panel-open');
+
+  // Resize map to fit new container size
+  setTimeout(() => {
+    map.resize();
+  }, 300); // Wait for transition to complete
+}
+
+
+function closeDetailsPanel() {
+  const panel = document.getElementById('neighborhood-details');
+  const mapContainer = document.getElementById('map');
+
+  panel.classList.remove('open');
+  mapContainer.classList.remove('panel-open');
+
+  // Resize map to fit new container size
+  setTimeout(() => {
+    map.resize();
+  }, 300); // Wait for transition to complete
 }
 
 function setupDetailsPanelClose() {
-  const panel = document.getElementById('neighborhood-details');
   const closeBtn = document.querySelector('.details-close');
 
   // Close button click
   closeBtn.onclick = () => {
-    panel.classList.remove('open');
-  };
-
-  // Click outside to close
-  panel.onclick = (e) => {
-    if (e.target === panel) {
-      panel.classList.remove('open');
-    }
+    closeDetailsPanel();
   };
 }
 
