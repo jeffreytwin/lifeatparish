@@ -2,6 +2,7 @@ import { collections, items } from '@wix/data';
 import { createClient, OAuthStrategy } from '@wix/sdk';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
+import { formatPrice, debounce } from './modules/utils.js';
 
 const neighborhoodGeojson = await fetchNeighborhoodGeojson()
 
@@ -24,7 +25,7 @@ const wixClient = createClient({
 });
 
 // fetch data from wix
-// fetchNeighborhoods()
+fetchNeighborhoods()
 fetchHousesForSale()
 fetchFloorPlans()
 
@@ -364,7 +365,7 @@ function setupDetailsPanelClose() {
 async function fetchNeighborhoods() {
 
   const result = await wixClient.items
-    .query('Neighborhoods')
+    .query('Realtors')
     .find()
 
   console.log('items', result);
@@ -526,13 +527,6 @@ function setupPriceSlider() {
   const selectedRange = document.getElementById('selected-range');
   const fill = document.getElementById('price-range-fill');
 
-  function formatPrice(value) {
-    if (value >= 1000) {
-      return `$${(value / 1000).toFixed(1).replace('.0', '')}M`;
-    }
-    return `$${value}K`;
-  }
-
   function updateSlider() {
     let min = parseInt(minSlider.value);
     let max = parseInt(maxSlider.value);
@@ -546,7 +540,7 @@ function setupPriceSlider() {
     filterState.priceMin = min;
     filterState.priceMax = max;
 
-    selectedRange.textContent = `${formatPrice(min)} - ${formatPrice(max)}`;
+    selectedRange.textContent = `$${formatPrice(min)} - $${formatPrice(max)}`;
 
     const minPercent = ((min - 200) / (6000 - 200)) * 100;
     const maxPercent = ((max - 200) / (6000 - 200)) * 100;
@@ -565,17 +559,16 @@ function setupPriceSlider() {
 function setupSearch() {
   const searchInput = document.getElementById('search-input');
   const clearBtn = document.getElementById('clear-search');
-  let debounceTimer;
+
+  const debouncedSearch = debounce((value) => {
+    filterState.search = value.toLowerCase();
+    applyFilters();
+  }, 300);
 
   searchInput.addEventListener('input', (e) => {
     const value = e.target.value;
     clearBtn.classList.toggle('hidden', !value);
-
-    clearTimeout(debounceTimer);
-    debounceTimer = setTimeout(() => {
-      filterState.search = value.toLowerCase();
-      applyFilters();
-    }, 300);
+    debouncedSearch(value);
   });
 
   clearBtn.addEventListener('click', () => {
