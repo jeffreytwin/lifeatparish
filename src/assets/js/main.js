@@ -3,6 +3,7 @@ import { createClient, OAuthStrategy } from '@wix/sdk';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { formatPrice, debounce } from './modules/utils.js';
+import { filterState, getSelectedNeighborhoodId, setSelectedNeighborhoodId } from './modules/state.js';
 
 const neighborhoodGeojson = await fetchNeighborhoodGeojson()
 
@@ -141,9 +142,6 @@ const popup = new mapboxgl.Popup({
   className: 'neighborhood-popup'
 });
 
-// Track selected neighborhood globally so we can clear it from filters
-let selectedNeighborhoodId = null;
-
 function setupMapInteractions() {
   let hoveredNeighborhoodId = null;
 
@@ -227,17 +225,17 @@ function setupMapInteractions() {
       const clickedFeature = e.features[0];
 
       // Clear previous selection
-      if (selectedNeighborhoodId !== null) {
+      if (getSelectedNeighborhoodId() !== null) {
         map.setFeatureState(
-          { source: 'neighborhoods', id: selectedNeighborhoodId },
+          { source: 'neighborhoods', id: getSelectedNeighborhoodId() },
           { selected: false }
         );
       }
 
       // Set new selection
-      selectedNeighborhoodId = clickedFeature.id;
+      setSelectedNeighborhoodId(clickedFeature.id);
       map.setFeatureState(
-        { source: 'neighborhoods', id: selectedNeighborhoodId },
+        { source: 'neighborhoods', id: getSelectedNeighborhoodId() },
         { selected: true }
       );
 
@@ -271,12 +269,12 @@ function setupMapInteractions() {
     // If clicked outside any polygon
     if (features.length === 0) {
       // Clear selection
-      if (selectedNeighborhoodId !== null) {
+      if (getSelectedNeighborhoodId() !== null) {
         map.setFeatureState(
-          { source: 'neighborhoods', id: selectedNeighborhoodId },
+          { source: 'neighborhoods', id: getSelectedNeighborhoodId() },
           { selected: false }
         );
-        selectedNeighborhoodId = null;
+        setSelectedNeighborhoodId(null);
       }
 
       // Close panel
@@ -393,18 +391,6 @@ async function fetchFloorPlans() {
 }
 
 // ========== NEW FILTER SYSTEM (Phase 2A) ==========
-
-const filterState = {
-  search: '',
-  priceMin: 200,
-  priceMax: 6000,
-  homeTypes: [],
-  amenities: [],
-  bedrooms: [],
-  forSale: 'all',
-  gated: false,
-  age55Plus: false
-};
 
 function setupFilters() {
   // Initialize UI components
@@ -728,12 +714,12 @@ function setupClearAll() {
 // Apply Filters to Map
 function applyFilters() {
   // Clear selected polygon and close details panel when filtering
-  if (selectedNeighborhoodId !== null) {
+  if (getSelectedNeighborhoodId() !== null) {
     map.setFeatureState(
-      { source: 'neighborhoods', id: selectedNeighborhoodId },
+      { source: 'neighborhoods', id: getSelectedNeighborhoodId() },
       { selected: false }
     );
-    selectedNeighborhoodId = null;
+    setSelectedNeighborhoodId(null);
   }
   closeDetailsPanel();
 
