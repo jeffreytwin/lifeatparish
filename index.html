@@ -14,19 +14,228 @@
     <div class="app-container">
       <main class="app-content">
 
-        <aside class="sidebar">
-          <h1 class="text-3xl font-bold underline">
-            Hello world!
-          </h1>
+        <aside class="sidebar bg-white shadow-lg flex flex-col">
+          <!-- Fixed Header -->
+          <div class="flex-shrink-0 p-6 pb-4 border-b-2 border-gray-200">
+            <div class="flex justify-between items-center mb-3">
+              <h2 class="text-xl font-bold text-gray-900">Find Your
+                Neighborhood</h2>
+            </div>
+
+            <!-- Active Filters Badge & Clear All (compact) -->
+            <div id="active-filters-badge"
+              class="hidden bg-[#676ACE]/10 border border-[#676ACE] rounded-lg px-3 py-2 flex items-center justify-between">
+              <span class="text-xs font-semibold text-[#676ACE]">
+                <span id="filter-count">0</span> active filters
+              </span>
+              <button id="clear-all-filters"
+                class="text-xs font-medium text-[#676ACE] hover:text-[#2C9E36] transition-colors underline">
+                Clear All
+              </button>
+            </div>
+          </div>
+
+          <!-- Scrollable Content -->
+          <div class="flex-1 overflow-y-auto p-6 flex flex-col gap-6">
+
+            <!-- Search Bar -->
+            <div class="relative">
+              <div class="relative">
+                <svg
+                  class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"
+                  fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                </svg>
+                <input
+                  type="text"
+                  id="search-input"
+                  placeholder="Search neighborhoods..."
+                  class="w-full pl-10 pr-10 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-[#676ACE] focus:border-[#676ACE] outline-none transition-all" />
+                <button id="clear-search"
+                  class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-2xl font-light hidden">×</button>
+              </div>
+              <div id="search-results"
+                class="text-sm text-gray-600 mt-2 hidden"></div>
+            </div>
+
+            <!-- Price Range Filter -->
+            <div class="filter-section">
+              <h3
+                class="text-xs font-bold uppercase tracking-wider text-gray-500 mb-3">Price
+                Range</h3>
+              <div class="px-2">
+                <div
+                  class="flex justify-between text-sm font-medium text-gray-700 mb-3">
+                  <span>$200K</span>
+                  <span>$6M+</span>
+                </div>
+                <div class="relative h-2 bg-gray-200 rounded-full mb-4">
+                  <div id="price-range-fill"
+                    class="absolute h-full bg-gradient-to-r from-[#676ACE] to-[#4AC2A9] rounded-full"></div>
+                  <input type="range" id="price-min" min="200" max="6000"
+                    value="200" step="100"
+                    class="price-slider absolute w-full cursor-pointer z-10">
+                  <input type="range" id="price-max" min="200" max="6000"
+                    value="6000" step="100"
+                    class="price-slider absolute w-full cursor-pointer z-10">
+                </div>
+                <div class="flex justify-center mt-3">
+                  <span
+                    class="text-sm font-semibold text-[#676ACE] bg-[#676ACE]/10 px-3 py-1 rounded-full">
+                    <span id="selected-range">$200K - $6M+</span>
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Home Types Filter -->
+            <div class="filter-section">
+              <h3
+                class="text-xs font-bold uppercase tracking-wider text-gray-500 mb-3">Home
+                Types</h3>
+              <div class="grid grid-cols-2 gap-2" id="home-types-container">
+                <!-- Will be populated dynamically -->
+              </div>
+            </div>
+
+            <!-- Amenities Filter -->
+            <div class="filter-section">
+              <h3
+                class="text-xs font-bold uppercase tracking-wider text-gray-500 mb-3">Amenities</h3>
+              <div class="relative">
+                <button id="amenities-dropdown-btn"
+                  class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg text-left flex justify-between items-center hover:border-[#676ACE] transition-colors">
+                  <span class="text-sm text-gray-600"
+                    id="amenities-placeholder">Select amenities...</span>
+                  <svg
+                    class="w-5 h-5 text-gray-400 transform transition-transform"
+                    id="amenities-arrow" fill="none" stroke="currentColor"
+                    viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                      stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                  </svg>
+                </button>
+
+                <!-- Dropdown Panel -->
+                <div id="amenities-dropdown"
+                  class="hidden absolute z-20 w-full mt-2 bg-white border-2 border-gray-200 rounded-lg shadow-xl max-h-64 overflow-hidden flex flex-col">
+                  <div class="p-3 border-b border-gray-200 relative">
+                    <input type="text" id="amenities-search"
+                      placeholder="Search amenities..."
+                      class="w-full px-3 py-2 pr-8 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-[#676ACE] focus:border-[#676ACE] outline-none">
+                    <button id="clear-amenities-search"
+                      class="absolute right-5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-xl font-light hidden">×</button>
+                  </div>
+                  <div id="amenities-list" class="overflow-y-auto flex-1 p-2">
+                    <!-- Will be populated dynamically -->
+                  </div>
+                </div>
+
+                <!-- Selected Amenities Chips -->
+                <div id="selected-amenities"
+                  class="flex flex-wrap gap-2 mt-3 empty:hidden">
+                  <!-- Selected chips will appear here -->
+                </div>
+              </div>
+            </div>
+
+            <!-- Bedrooms Filter -->
+            <div class="filter-section">
+              <h3
+                class="text-xs font-bold uppercase tracking-wider text-gray-500 mb-3">Bedrooms</h3>
+              <div class="flex flex-wrap gap-2" id="bedrooms-container">
+                <!-- Will be populated dynamically -->
+              </div>
+            </div>
+
+            <!-- For Sale Status -->
+            <div class="filter-section">
+              <h3
+                class="text-xs font-bold uppercase tracking-wider text-gray-500 mb-3">Availability</h3>
+              <div class="space-y-2">
+                <label
+                  class="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors">
+                  <input type="radio" name="forSale" value="all" checked
+                    class="w-4 h-4 text-[#676ACE] focus:ring-[#676ACE]" />
+                  <span class="text-sm font-medium text-gray-700">Show
+                    All</span>
+                </label>
+                <label
+                  class="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors">
+                  <input type="radio" name="forSale" value="new"
+                    class="w-4 h-4 text-[#676ACE] focus:ring-[#676ACE]" />
+                  <span class="text-sm font-medium text-gray-700">New
+                    Construction Only</span>
+                </label>
+                <label
+                  class="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors">
+                  <input type="radio" name="forSale" value="existing"
+                    class="w-4 h-4 text-[#676ACE] focus:ring-[#676ACE]" />
+                  <span class="text-sm font-medium text-gray-700">Resale Homes
+                    Only</span>
+                </label>
+              </div>
+            </div>
+
+            <!-- Community Features -->
+            <div class="filter-section">
+              <h3
+                class="text-xs font-bold uppercase tracking-wider text-gray-500 mb-3">Community
+                Features</h3>
+              <div class="space-y-3">
+                <label
+                  class="flex items-center justify-between p-3 bg-gray-50 rounded-lg cursor-pointer">
+                  <span class="text-sm font-medium text-gray-700">Gated
+                    Community</span>
+                  <input type="checkbox" id="filter-gated"
+                    class="toggle-switch">
+                </label>
+                <label
+                  class="flex items-center justify-between p-3 bg-gray-50 rounded-lg cursor-pointer">
+                  <span class="text-sm font-medium text-gray-700">55+
+                    Only</span>
+                  <input type="checkbox" id="filter-55plus"
+                    class="toggle-switch">
+                </label>
+              </div>
+            </div>
+
+            <!-- Empty State -->
+            <div id="no-results"
+              class="hidden bg-amber-50 border-2 border-amber-300 rounded-lg p-4">
+              <p class="text-sm font-semibold text-amber-900 mb-2">No
+                neighborhoods match your filters</p>
+              <button
+                class="text-sm text-amber-700 hover:text-amber-900 underline font-medium"
+                onclick="document.getElementById('clear-all-filters').click()">
+                Clear some filters
+              </button>
+            </div>
+
+          </div>
+          <!-- End Scrollable Content -->
+
+          <!-- Fixed Footer -->
+          <div
+            class="flex-shrink-0 p-6 pt-4 border-t-2 border-gray-200 bg-white">
+            <div id="results-counter"
+              class="text-center text-sm font-semibold text-gray-600">
+              Showing <span class="text-[#2C9E36]" id="matched-count">0</span>
+              of <span id="total-count">0</span> neighborhoods
+            </div>
+          </div>
         </aside>
 
         <div id="map" class="map-container"></div>
 
         <div id="neighborhood-details" class="details-panel">
-          <button class="details-close" aria-label="Close details panel">×</button>
+          <button class="details-close"
+            aria-label="Close details panel">×</button>
           <div class="details-content">
             <div class="details-header">
-              <img class="details-image" src="" alt="" />
+              <img class="details-image" src alt />
               <h2 class="details-title"></h2>
             </div>
             <div class="details-stats">
@@ -39,34 +248,25 @@
                 <span class="stat-value" id="home-types"></span>
               </div>
             </div>
-            <div class="details-section">
-              <h3>Amenities</h3>
-              <div class="amenities-list" id="amenities-list"></div>
-            </div>
-            <div class="details-section">
-              <h3>Availability</h3>
-              <div class="availability-stats">
-                <div class="availability-item">
-                  <span class="availability-number" id="homes-count">0</span>
-                  <span class="availability-label">Homes for Sale</span>
-                </div>
-                <div class="availability-item">
-                  <span class="availability-number" id="floorplans-count">0</span>
-                  <span class="availability-label">Floor Plans</span>
-                </div>
-              </div>
-            </div>
+
             <div class="details-section">
               <p class="details-description" id="description"></p>
             </div>
-            <a href="#" class="details-cta" id="neighborhood-link">View Neighborhood Page</a>
+            <div class="details-section">
+              <h3>
+                Show a list of all houses in this neighbourhood here
+              </h3>
+            </div>
+            <a href="#" class="details-cta" id="neighborhood-link">View
+              Neighborhood Page</a>
           </div>
+
         </div>
 
-        </main>
-      </div>
-      <!-- Configuration must be loaded first -->
-      <script src="config.js"></script>
-      <script type="module" src="./src/assets/js/main.js"></script>
-    </body>
-  </html>
+      </main>
+    </div>
+    <!-- Configuration must be loaded first -->
+    <script src="config.js"></script>
+    <script type="module" src="./src/assets/js/main.js"></script>
+  </body>
+</html>
