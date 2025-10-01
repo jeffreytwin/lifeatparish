@@ -1,9 +1,8 @@
-import { collections, items } from '@wix/data';
-import { createClient, OAuthStrategy } from '@wix/sdk';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { formatPrice, debounce } from './modules/utils.js';
 import { filterState, getSelectedNeighborhoodId, setSelectedNeighborhoodId } from './modules/state.js';
+import { fetchNeighborhoods, fetchHousesForSale, fetchFloorPlans } from './modules/api.js';
 
 const neighborhoodGeojson = await fetchNeighborhoodGeojson()
 
@@ -17,19 +16,10 @@ const map = new mapboxgl.Map({
   zoom: 7
 });
 
-// Initialize Wix client
-const wixClient = createClient({
-  modules: { items, collections },
-  auth: OAuthStrategy({
-    clientId: '7cbe278c-f794-4ac6-8261-404022bb5625',
-  })
-});
-
 // fetch data from wix
-fetchNeighborhoods()
-fetchHousesForSale()
-fetchFloorPlans()
-
+fetchNeighborhoods();
+fetchHousesForSale();
+fetchFloorPlans();
 
 map.on('load', () => {
   // Add your GeoJSON polygons
@@ -360,35 +350,6 @@ function setupDetailsPanelClose() {
   };
 }
 
-async function fetchNeighborhoods() {
-
-  const result = await wixClient.items
-    .query('Realtors')
-    .find()
-
-  console.log('items', result);
-  return result.items;
-}
-
-async function fetchHousesForSale() {
-
-  const result = await wixClient.items
-    .query('HousesforSale')
-    .find()
-
-  console.log('Houses for sale', { result });
-  return result.items;
-}
-
-async function fetchFloorPlans() {
-
-  const result = await wixClient.items
-    .query('FloorPlans')
-    .find()
-
-  console.log('floor plans', { result });
-  return result.items;
-}
 
 // ========== NEW FILTER SYSTEM (Phase 2A) ==========
 
