@@ -5,7 +5,7 @@ import { filterState, getSelectedNeighborhoodId, setSelectedNeighborhoodId } fro
 import { fetchNeighborhoods, fetchHousesForSale, fetchFloorPlans } from './modules/api.js';
 import { initDetailsPanel, showNeighborhoodDetails, closeDetailsPanel } from './modules/details-panel.js';
 import { fetchNeighborhoodGeojson, createPopup, fitMapToAllNeighborhoods, setupMapInteractions, loadNeighborhoodsGeojson } from './modules/map.js';
-import { addAmenityChip, removeAmenityChip, updateAmenitiesPlaceholder } from './modules/filters.js';
+import { populateHomeTypes, populateAmenities, populateBedrooms, addAmenityChip, removeAmenityChip, updateAmenitiesPlaceholder } from './modules/filters.js';
 
 const neighborhoodGeojson = await fetchNeighborhoodGeojson()
 
@@ -55,9 +55,9 @@ map.on('load', () => {
 
 function setupFilters() {
   // Initialize UI components
-  populateHomeTypes();
-  populateAmenities();
-  populateBedrooms();
+  populateHomeTypes(applyFilters);
+  populateAmenities(neighborhoodGeojson, applyFilters);
+  populateBedrooms(applyFilters);
   setupPriceSlider();
   setupSearch();
   setupAmenitiesDropdown();
@@ -67,104 +67,6 @@ function setupFilters() {
 
   // Initial display
   updateResultsCounter();
-}
-
-// Populate Home Types from GeoJSON
-function populateHomeTypes() {
-  // Mock data for Phase 2A - will be replaced with dynamic data in Phase 2B
-  const types = ['Single Family', 'Townhome', 'Villa', 'Condominium'];
-
-  const container = document.getElementById('home-types-container');
-
-  types.forEach(type => {
-    const btn = document.createElement('button');
-    btn.className = 'px-4 py-2 text-sm font-medium border-2 border-gray-200 rounded-lg hover:border-[#676ACE] transition-colors';
-    btn.textContent = type;
-    btn.dataset.type = type;
-
-    btn.addEventListener('click', () => {
-      const isActive = filterState.homeTypes.includes(type);
-      if (isActive) {
-        filterState.homeTypes = filterState.homeTypes.filter(t => t !== type);
-        btn.classList.remove('bg-[#676ACE]', 'text-white', 'border-[#676ACE]');
-        btn.classList.add('border-gray-200');
-      } else {
-        filterState.homeTypes.push(type);
-        btn.classList.add('bg-[#676ACE]', 'text-white', 'border-[#676ACE]');
-        btn.classList.remove('border-gray-200');
-      }
-      applyFilters();
-    });
-
-    container.appendChild(btn);
-  });
-}
-
-// Populate Amenities Dropdown
-function populateAmenities() {
-  const amenitiesSet = new Set();
-  neighborhoodGeojson.features.forEach(feature => {
-    const amenities = feature.properties.amenities;
-    if (Array.isArray(amenities)) {
-      amenities.forEach(a => amenitiesSet.add(a));
-    }
-  });
-
-  const list = document.getElementById('amenities-list');
-  const sorted = Array.from(amenitiesSet).sort();
-
-  sorted.forEach(amenity => {
-    const label = document.createElement('label');
-    label.className = 'flex items-center gap-2 p-2 hover:bg-gray-50 rounded cursor-pointer';
-    label.innerHTML = `
-      <input type="checkbox" value="${amenity}" class="w-4 h-4 text-[#676ACE] focus:ring-[#676ACE] rounded">
-      <span class="text-sm text-gray-700">${amenity}</span>
-    `;
-
-    const checkbox = label.querySelector('input');
-    checkbox.addEventListener('change', (e) => {
-      if (e.target.checked) {
-        filterState.amenities.push(amenity);
-        addAmenityChip(amenity, applyFilters);
-      } else {
-        filterState.amenities = filterState.amenities.filter(a => a !== amenity);
-        removeAmenityChip(amenity);
-      }
-      updateAmenitiesPlaceholder();
-      applyFilters();
-    });
-
-    list.appendChild(label);
-  });
-}
-
-// Populate Bedrooms Chips
-function populateBedrooms() {
-  const bedroomOptions = ['2-3', '3-4', '4-5', '5+'];
-  const container = document.getElementById('bedrooms-container');
-
-  bedroomOptions.forEach(range => {
-    const btn = document.createElement('button');
-    btn.className = 'px-4 py-2 text-sm font-medium border-2 border-gray-200 rounded-full hover:border-[#2C9E36] transition-colors';
-    btn.textContent = `${range} BR`;
-    btn.dataset.range = range;
-
-    btn.addEventListener('click', () => {
-      const isActive = filterState.bedrooms.includes(range);
-      if (isActive) {
-        filterState.bedrooms = filterState.bedrooms.filter(b => b !== range);
-        btn.classList.remove('bg-[#2C9E36]', 'text-white', 'border-[#2C9E36]');
-        btn.classList.add('border-gray-200');
-      } else {
-        filterState.bedrooms.push(range);
-        btn.classList.add('bg-[#2C9E36]', 'text-white', 'border-[#2C9E36]');
-        btn.classList.remove('border-gray-200');
-      }
-      applyFilters();
-    });
-
-    container.appendChild(btn);
-  });
 }
 
 // Setup Price Slider
