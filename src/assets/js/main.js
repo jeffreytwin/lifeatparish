@@ -5,7 +5,7 @@ import { filterState, getSelectedNeighborhoodId, setSelectedNeighborhoodId } fro
 import { fetchNeighborhoods, fetchHousesForSale, fetchFloorPlans } from './modules/api.js';
 import { initDetailsPanel, showNeighborhoodDetails, closeDetailsPanel } from './modules/details-panel.js';
 import { fetchNeighborhoodGeojson, createPopup, fitMapToAllNeighborhoods, setupMapInteractions, loadNeighborhoodsGeojson } from './modules/map.js';
-import { populateHomeTypes, populateAmenities, populateBedrooms, addAmenityChip, removeAmenityChip, updateAmenitiesPlaceholder } from './modules/filters.js';
+import { populateHomeTypes, populateAmenities, populateBedrooms, setupPriceSlider, setupSearch, setupAmenitiesDropdown, setupForSaleFilter, setupCommunityFeatures, setupClearAll, updateAmenitiesPlaceholder } from './modules/filters.js';
 
 const neighborhoodGeojson = await fetchNeighborhoodGeojson()
 
@@ -58,185 +58,15 @@ function setupFilters() {
   populateHomeTypes(applyFilters);
   populateAmenities(neighborhoodGeojson, applyFilters);
   populateBedrooms(applyFilters);
-  setupPriceSlider();
-  setupSearch();
+  setupPriceSlider(applyFilters);
+  setupSearch(applyFilters);
   setupAmenitiesDropdown();
-  setupForSaleFilter();
-  setupCommunityFeatures();
-  setupClearAll();
+  setupForSaleFilter(applyFilters);
+  setupCommunityFeatures(applyFilters);
+  setupClearAll(applyFilters);
 
   // Initial display
   updateResultsCounter();
-}
-
-// Setup Price Slider
-function setupPriceSlider() {
-  const minSlider = document.getElementById('price-min');
-  const maxSlider = document.getElementById('price-max');
-  const selectedRange = document.getElementById('selected-range');
-  const fill = document.getElementById('price-range-fill');
-
-  function updateSlider() {
-    let min = parseInt(minSlider.value);
-    let max = parseInt(maxSlider.value);
-
-    if (min > max) {
-      [min, max] = [max, min];
-      minSlider.value = min;
-      maxSlider.value = max;
-    }
-
-    filterState.priceMin = min;
-    filterState.priceMax = max;
-
-    selectedRange.textContent = `$${formatPrice(min)} - $${formatPrice(max)}`;
-
-    const minPercent = ((min - 200) / (6000 - 200)) * 100;
-    const maxPercent = ((max - 200) / (6000 - 200)) * 100;
-    fill.style.left = `${minPercent}%`;
-    fill.style.width = `${maxPercent - minPercent}%`;
-
-    applyFilters();
-  }
-
-  minSlider.addEventListener('input', updateSlider);
-  maxSlider.addEventListener('input', updateSlider);
-  updateSlider(); // Initial setup
-}
-
-// Setup Search
-function setupSearch() {
-  const searchInput = document.getElementById('search-input');
-  const clearBtn = document.getElementById('clear-search');
-
-  const debouncedSearch = debounce((value) => {
-    filterState.search = value.toLowerCase();
-    applyFilters();
-  }, 300);
-
-  searchInput.addEventListener('input', (e) => {
-    const value = e.target.value;
-    clearBtn.classList.toggle('hidden', !value);
-    debouncedSearch(value);
-  });
-
-  clearBtn.addEventListener('click', () => {
-    searchInput.value = '';
-    clearBtn.classList.add('hidden');
-    filterState.search = '';
-    applyFilters();
-  });
-}
-
-// Setup Amenities Dropdown
-function setupAmenitiesDropdown() {
-  const btn = document.getElementById('amenities-dropdown-btn');
-  const dropdown = document.getElementById('amenities-dropdown');
-  const arrow = document.getElementById('amenities-arrow');
-  const searchInput = document.getElementById('amenities-search');
-  const clearSearchBtn = document.getElementById('clear-amenities-search');
-
-  btn.addEventListener('click', () => {
-    dropdown.classList.toggle('hidden');
-    arrow.classList.toggle('rotate-180');
-  });
-
-  // Close when clicking outside
-  document.addEventListener('click', (e) => {
-    if (!btn.contains(e.target) && !dropdown.contains(e.target)) {
-      dropdown.classList.add('hidden');
-      arrow.classList.remove('rotate-180');
-    }
-  });
-
-  // Search within amenities
-  searchInput.addEventListener('input', (e) => {
-    const search = e.target.value.toLowerCase();
-    const labels = dropdown.querySelectorAll('label');
-    labels.forEach(label => {
-      const text = label.textContent.toLowerCase();
-      label.style.display = text.includes(search) ? 'flex' : 'none';
-    });
-
-    // Show/hide clear button
-    clearSearchBtn.classList.toggle('hidden', search === '');
-  });
-
-  // Clear search input
-  clearSearchBtn.addEventListener('click', () => {
-    searchInput.value = '';
-    clearSearchBtn.classList.add('hidden');
-    // Show all amenities
-    const labels = dropdown.querySelectorAll('label');
-    labels.forEach(label => {
-      label.style.display = 'flex';
-    });
-  });
-}
-
-
-// Setup For Sale Filter
-function setupForSaleFilter() {
-  document.querySelectorAll('input[name="forSale"]').forEach(radio => {
-    radio.addEventListener('change', (e) => {
-      filterState.forSale = e.target.value;
-      applyFilters();
-    });
-  });
-}
-
-// Setup Community Features
-function setupCommunityFeatures() {
-  document.getElementById('filter-gated').addEventListener('change', (e) => {
-    filterState.gated = e.target.checked;
-    applyFilters();
-  });
-
-  document.getElementById('filter-55plus').addEventListener('change', (e) => {
-    filterState.age55Plus = e.target.checked;
-    applyFilters();
-  });
-}
-
-// Setup Clear All
-function setupClearAll() {
-  document.getElementById('clear-all-filters').addEventListener('click', () => {
-    // Reset state
-    filterState.search = '';
-    filterState.priceMin = 200;
-    filterState.priceMax = 6000;
-    filterState.homeTypes = [];
-    filterState.amenities = [];
-    filterState.bedrooms = [];
-    filterState.forSale = 'all';
-    filterState.gated = false;
-    filterState.age55Plus = false;
-
-    // Reset UI
-    document.getElementById('search-input').value = '';
-    document.getElementById('clear-search').classList.add('hidden');
-    document.getElementById('price-min').value = 200;
-    document.getElementById('price-max').value = 6000;
-    document.querySelectorAll('#home-types-container button').forEach(btn => {
-      btn.classList.remove('bg-[#676ACE]', 'text-white', 'border-[#676ACE]');
-      btn.classList.add('border-gray-200');
-    });
-    document.querySelectorAll('#bedrooms-container button').forEach(btn => {
-      btn.classList.remove('bg-[#2C9E36]', 'text-white', 'border-[#2C9E36]');
-      btn.classList.add('border-gray-200');
-    });
-    document.querySelectorAll('#amenities-list input').forEach(cb => cb.checked = false);
-    document.getElementById('selected-amenities').innerHTML = '';
-    updateAmenitiesPlaceholder();
-    document.querySelector('input[name="forSale"][value="all"]').checked = true;
-    document.getElementById('filter-gated').checked = false;
-    document.getElementById('filter-55plus').checked = false;
-
-    // Re-trigger slider update
-    document.getElementById('price-min').dispatchEvent(new Event('input'));
-
-    applyFilters();
-  });
 }
 
 // Apply Filters to Map
