@@ -4,6 +4,7 @@ import { formatPrice, debounce } from './modules/utils.js';
 import { filterState, getSelectedNeighborhoodId, setSelectedNeighborhoodId } from './modules/state.js';
 import { fetchNeighborhoods, fetchHousesForSale, fetchFloorPlans } from './modules/api.js';
 import { initDetailsPanel, showNeighborhoodDetails, closeDetailsPanel } from './modules/details-panel.js';
+import { fetchNeighborhoodGeojson } from './modules/map.js';
 
 const neighborhoodGeojson = await fetchNeighborhoodGeojson()
 
@@ -27,12 +28,6 @@ map.on('load', () => {
   loadNeighborhoodsGeojson();
 
 });
-
-async function fetchNeighborhoodGeojson() {
-  const response = await fetch('neighborhoods.geojson');
-  const neighborhoodData = await response.json();
-  return neighborhoodData
-}
 
 async function loadNeighborhoodsGeojson() {
 
