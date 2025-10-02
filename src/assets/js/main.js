@@ -5,7 +5,7 @@ import { filterState, getSelectedNeighborhoodId, setSelectedNeighborhoodId } fro
 import { fetchNeighborhoods, fetchHousesForSale, fetchFloorPlans } from './modules/api.js';
 import { initDetailsPanel, showNeighborhoodDetails, closeDetailsPanel } from './modules/details-panel.js';
 import { fetchNeighborhoodGeojson, createPopup, fitMapToAllNeighborhoods, setupMapInteractions, loadNeighborhoodsGeojson } from './modules/map.js';
-import { populateHomeTypes, populateAmenities, populateBedrooms, setupPriceSlider, setupSearch, setupAmenitiesDropdown, setupForSaleFilter, setupCommunityFeatures, setupClearAll, updateAmenitiesPlaceholder } from './modules/filters.js';
+import { populateHomeTypes, populateAmenities, populateBedrooms, setupPriceSlider, setupSearch, setupAmenitiesDropdown, setupForSaleFilter, setupCommunityFeatures, setupClearAll, updateAmenitiesPlaceholder, applyFilters as applyFiltersModule } from './modules/filters.js';
 
 const neighborhoodGeojson = await fetchNeighborhoodGeojson()
 
@@ -53,6 +53,11 @@ map.on('load', () => {
 
 // ========== NEW FILTER SYSTEM (Phase 2A) ==========
 
+// Wrapper for applyFilters that provides all necessary dependencies
+function applyFilters() {
+  applyFiltersModule(map, neighborhoodGeojson, getSelectedNeighborhoodId, setSelectedNeighborhoodId, closeDetailsPanel, updateFilterUI);
+}
+
 function setupFilters() {
   // Initialize UI components
   populateHomeTypes(applyFilters);
@@ -67,121 +72,6 @@ function setupFilters() {
 
   // Initial display
   updateResultsCounter();
-}
-
-// Apply Filters to Map
-function applyFilters() {
-  // Clear selected polygon and close details panel when filtering
-  if (getSelectedNeighborhoodId() !== null) {
-    map.setFeatureState(
-      { source: 'neighborhoods', id: getSelectedNeighborhoodId() },
-      { selected: false }
-    );
-    setSelectedNeighborhoodId(null);
-  }
-  closeDetailsPanel();
-
-  let matchedCount = 0;
-  const features = neighborhoodGeojson.features;
-  const matchedFeatures = [];
-
-  features.forEach((feature, index) => {
-    const props = feature.properties;
-    let matches = true;
-
-    // Search filter
-    if (filterState.search) {
-      const name = (props.neighborhood || '').toLowerCase();
-      const builder = (props.builder || '').toLowerCase();
-      const amenities = Array.isArray(props.amenities) ? props.amenities.join(' ').toLowerCase() : '';
-      matches = name.includes(filterState.search) || builder.includes(filterState.search) || amenities.includes(filterState.search);
-    }
-
-    // Price range (stub - will be dynamic later)
-    // For now, just pass through
-
-    // Home types - disabled for Phase 2A (no homeType property in GeoJSON)
-    // Will be implemented in Phase 2B with Wix data
-    // if (matches && filterState.homeTypes.length > 0) {
-    //   const propHomeType = props.homeType || '';
-    //   matches = filterState.homeTypes.some(type => propHomeType.includes(type));
-    // }
-
-    // Amenities
-    if (matches && filterState.amenities.length > 0) {
-      const propAmenities = props.amenities || [];
-      matches = filterState.amenities.every(amenity => propAmenities.includes(amenity));
-    }
-
-    // For Sale
-    if (matches && filterState.forSale !== 'all') {
-      if (filterState.forSale === 'new') {
-        matches = props.new_construction === true;
-      } else if (filterState.forSale === 'existing') {
-        matches = !props.new_construction;
-      }
-    }
-
-    // Gated (stub for now)
-    // Will implement when we have the data
-
-    // Update visibility
-    map.setFeatureState(
-      { source: 'neighborhoods', id: index },
-      { hidden: !matches }
-    );
-
-    if (matches) {
-      matchedCount++;
-      matchedFeatures.push(feature);
-    }
-  });
-
-  updateMapVisibility();
-  updateFilterUI(matchedCount);
-  fitMapToMatches(matchedFeatures);
-}
-
-function fitMapToMatches(matchedFeatures) {
-  if (matchedFeatures.length === 0) return;
-
-  // Calculate bounds of all matched features
-  const bounds = new mapboxgl.LngLatBounds();
-
-  matchedFeatures.forEach(feature => {
-    feature.geometry.coordinates.forEach(polygon => {
-      polygon.forEach(coord => {
-        bounds.extend(coord);
-      });
-    });
-  });
-
-  // Fit map to bounds with smooth animation
-  map.fitBounds(bounds, {
-    padding: 50, // Equal padding on all sides
-    duration: 1000, // 1 second smooth animation
-    maxZoom: 15 // Don't zoom in too close
-  });
-}
-
-function updateMapVisibility() {
-  map.setPaintProperty('neighborhood-fills', 'fill-opacity', [
-    'case',
-    ['boolean', ['feature-state', 'hidden'], false],
-    0,
-    ['boolean', ['feature-state', 'selected'], false],
-    0.8,
-    ['boolean', ['feature-state', 'hover'], false],
-    0.8,
-    ['get', 'fill-opacity']
-  ]);
-
-  map.setPaintProperty('neighborhood-borders', 'line-opacity', [
-    'case',
-    ['boolean', ['feature-state', 'hidden'], false],
-    0,
-    ['get', 'stroke-opacity']
-  ]);
 }
 
 function updateFilterUI(matchedCount) {

@@ -4,6 +4,7 @@
 
 import { filterState } from './state.js';
 import { formatPrice, debounce } from './utils.js';
+import mapboxgl from 'mapbox-gl';
 
 // ========== POPULATION FUNCTIONS ==========
 
@@ -301,6 +302,140 @@ export function setupClearAll(applyFiltersCallback) {
 
     applyFiltersCallback();
   });
+}
+
+// ========== FILTER APPLICATION FUNCTIONS ==========
+
+/**
+ * Apply Filters to Map
+ * @param {mapboxgl.Map} map - The map instance
+ * @param {Object} geojson - The GeoJSON data
+ * @param {Function} getSelectedId - Function to get selected neighborhood ID
+ * @param {Function} setSelectedId - Function to set selected neighborhood ID
+ * @param {Function} closeDetails - Function to close details panel
+ * @param {Function} updateFilterUICallback - Callback to update filter UI
+ */
+export function applyFilters(map, geojson, getSelectedId, setSelectedId, closeDetails, updateFilterUICallback) {
+  // Clear selected polygon and close details panel when filtering
+  if (getSelectedId() !== null) {
+    map.setFeatureState(
+      { source: 'neighborhoods', id: getSelectedId() },
+      { selected: false }
+    );
+    setSelectedId(null);
+  }
+  closeDetails();
+
+  let matchedCount = 0;
+  const features = geojson.features;
+  const matchedFeatures = [];
+
+  features.forEach((feature, index) => {
+    const props = feature.properties;
+    let matches = true;
+
+    // Search filter
+    if (filterState.search) {
+      const name = (props.neighborhood || '').toLowerCase();
+      const builder = (props.builder || '').toLowerCase();
+      const amenities = Array.isArray(props.amenities) ? props.amenities.join(' ').toLowerCase() : '';
+      matches = name.includes(filterState.search) || builder.includes(filterState.search) || amenities.includes(filterState.search);
+    }
+
+    // Price range (stub - will be dynamic later)
+    // For now, just pass through
+
+    // Home types - disabled for Phase 2A (no homeType property in GeoJSON)
+    // Will be implemented in Phase 2B with Wix data
+    // if (matches && filterState.homeTypes.length > 0) {
+    //   const propHomeType = props.homeType || '';
+    //   matches = filterState.homeTypes.some(type => propHomeType.includes(type));
+    // }
+
+    // Amenities
+    if (matches && filterState.amenities.length > 0) {
+      const propAmenities = props.amenities || [];
+      matches = filterState.amenities.every(amenity => propAmenities.includes(amenity));
+    }
+
+    // For Sale
+    if (matches && filterState.forSale !== 'all') {
+      if (filterState.forSale === 'new') {
+        matches = props.new_construction === true;
+      } else if (filterState.forSale === 'existing') {
+        matches = !props.new_construction;
+      }
+    }
+
+    // Gated (stub for now)
+    // Will implement when we have the data
+
+    // Update visibility
+    map.setFeatureState(
+      { source: 'neighborhoods', id: index },
+      { hidden: !matches }
+    );
+
+    if (matches) {
+      matchedCount++;
+      matchedFeatures.push(feature);
+    }
+  });
+
+  updateMapVisibility(map);
+  updateFilterUICallback(matchedCount);
+  fitMapToMatches(map, matchedFeatures);
+}
+
+/**
+ * Fit map to matched features
+ * @param {mapboxgl.Map} map - The map instance
+ * @param {Array} matchedFeatures - Array of matched features
+ */
+export function fitMapToMatches(map, matchedFeatures) {
+  if (matchedFeatures.length === 0) return;
+
+  // Calculate bounds of all matched features
+  const bounds = new mapboxgl.LngLatBounds();
+
+  matchedFeatures.forEach(feature => {
+    feature.geometry.coordinates.forEach(polygon => {
+      polygon.forEach(coord => {
+        bounds.extend(coord);
+      });
+    });
+  });
+
+  // Fit map to bounds with smooth animation
+  map.fitBounds(bounds, {
+    padding: 50, // Equal padding on all sides
+    duration: 1000, // 1 second smooth animation
+    maxZoom: 15 // Don't zoom in too close
+  });
+}
+
+/**
+ * Update map visibility based on feature state
+ * @param {mapboxgl.Map} map - The map instance
+ */
+export function updateMapVisibility(map) {
+  map.setPaintProperty('neighborhood-fills', 'fill-opacity', [
+    'case',
+    ['boolean', ['feature-state', 'hidden'], false],
+    0,
+    ['boolean', ['feature-state', 'selected'], false],
+    0.8,
+    ['boolean', ['feature-state', 'hover'], false],
+    0.8,
+    ['get', 'fill-opacity']
+  ]);
+
+  map.setPaintProperty('neighborhood-borders', 'line-opacity', [
+    'case',
+    ['boolean', ['feature-state', 'hidden'], false],
+    0,
+    ['get', 'stroke-opacity']
+  ]);
 }
 
 // ========== HELPER FUNCTIONS ==========
