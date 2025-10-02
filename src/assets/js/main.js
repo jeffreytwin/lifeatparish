@@ -4,7 +4,7 @@ import { formatPrice, debounce } from './modules/utils.js';
 import { filterState, getSelectedNeighborhoodId, setSelectedNeighborhoodId } from './modules/state.js';
 import { fetchNeighborhoods, fetchHousesForSale, fetchFloorPlans } from './modules/api.js';
 import { initDetailsPanel, showNeighborhoodDetails, closeDetailsPanel } from './modules/details-panel.js';
-import { fetchNeighborhoodGeojson, createPopup } from './modules/map.js';
+import { fetchNeighborhoodGeojson, createPopup, fitMapToAllNeighborhoods } from './modules/map.js';
 
 const neighborhoodGeojson = await fetchNeighborhoodGeojson()
 
@@ -100,24 +100,7 @@ async function loadNeighborhoodsGeojson() {
   setupFilters();
 
   // Fit map to all neighborhoods on initial load
-  fitMapToAllNeighborhoods();
-}
-
-function fitMapToAllNeighborhoods() {
-  const bounds = new mapboxgl.LngLatBounds();
-
-  neighborhoodGeojson.features.forEach(feature => {
-    feature.geometry.coordinates.forEach(polygon => {
-      polygon.forEach(coord => {
-        bounds.extend(coord);
-      });
-    });
-  });
-
-  map.fitBounds(bounds, {
-    padding: 50, // Equal padding on all sides
-    duration: 1000 // 1 second smooth animation
-  });
+  fitMapToAllNeighborhoods(map, neighborhoodGeojson);
 }
 
 // Create a reusable popup instance

@@ -26,3 +26,25 @@ export function createPopup() {
     className: 'neighborhood-popup'
   });
 }
+
+/**
+ * Fit map to all neighborhoods on initial load
+ * @param {mapboxgl.Map} map - The map instance
+ * @param {Object} geojson - The GeoJSON data
+ */
+export function fitMapToAllNeighborhoods(map, geojson) {
+  const bounds = new mapboxgl.LngLatBounds();
+
+  geojson.features.forEach(feature => {
+    feature.geometry.coordinates.forEach(polygon => {
+      polygon.forEach(coord => {
+        bounds.extend(coord);
+      });
+    });
+  });
+
+  map.fitBounds(bounds, {
+    padding: 50, // Equal padding on all sides
+    duration: 1000 // 1 second smooth animation
+  });
+}
