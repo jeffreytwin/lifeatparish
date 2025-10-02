@@ -4,7 +4,7 @@ import { formatPrice, debounce } from './modules/utils.js';
 import { filterState, getSelectedNeighborhoodId, setSelectedNeighborhoodId } from './modules/state.js';
 import { fetchNeighborhoods, fetchHousesForSale, fetchFloorPlans } from './modules/api.js';
 import { initDetailsPanel, showNeighborhoodDetails, closeDetailsPanel } from './modules/details-panel.js';
-import { fetchNeighborhoodGeojson } from './modules/map.js';
+import { fetchNeighborhoodGeojson, createPopup } from './modules/map.js';
 
 const neighborhoodGeojson = await fetchNeighborhoodGeojson()
 
@@ -121,12 +121,7 @@ function fitMapToAllNeighborhoods() {
 }
 
 // Create a reusable popup instance
-const popup = new mapboxgl.Popup({
-  closeButton: false,
-  closeOnClick: false,
-  offset: 15,
-  className: 'neighborhood-popup'
-});
+const popup = createPopup();
 
 function setupMapInteractions() {
   let hoveredNeighborhoodId = null;
