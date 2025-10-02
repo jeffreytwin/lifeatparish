@@ -4,7 +4,7 @@ import { formatPrice, debounce } from './modules/utils.js';
 import { filterState, getSelectedNeighborhoodId, setSelectedNeighborhoodId } from './modules/state.js';
 import { fetchNeighborhoods, fetchHousesForSale, fetchFloorPlans } from './modules/api.js';
 import { initDetailsPanel, showNeighborhoodDetails, closeDetailsPanel } from './modules/details-panel.js';
-import { fetchNeighborhoodGeojson, createPopup, fitMapToAllNeighborhoods, setupMapInteractions } from './modules/map.js';
+import { fetchNeighborhoodGeojson, createPopup, fitMapToAllNeighborhoods, setupMapInteractions, loadNeighborhoodsGeojson } from './modules/map.js';
 
 const neighborhoodGeojson = await fetchNeighborhoodGeojson()
 
@@ -24,71 +24,8 @@ fetchHousesForSale();
 fetchFloorPlans();
 
 map.on('load', () => {
-  // Add your GeoJSON polygons
-  loadNeighborhoodsGeojson();
-
-});
-
-async function loadNeighborhoodsGeojson() {
-
-  // add the polygons
-  map.addSource('neighborhoods', {
-    type: 'geojson',
-    data: neighborhoodGeojson,
-    generateId: true // Generate IDs for features automatically
-  });
-
-  // Style the polygons
-  map.addLayer({
-    id: 'neighborhood-fills',
-    type: 'fill',
-    source: 'neighborhoods',
-    paint: {
-      'fill-color': ['get', 'fill'],
-      'fill-opacity': [
-        'case',
-        ['boolean', ['feature-state', 'selected'], false],
-        0.8, // Keep bright when selected
-        ['boolean', ['feature-state', 'hover'], false],
-        0.8, // Brighten on hover
-        ['get', 'fill-opacity'] // Default opacity
-      ],
-    }
-  });
-
-  // Add border/stroke layer
-  map.addLayer({
-    id: 'neighborhood-borders',
-    type: 'line',
-    source: 'neighborhoods',
-    paint: {
-      'line-color': ['get', 'stroke'],
-      'line-width': ['get', 'stroke-width'],
-      'line-opacity': ['get', 'stroke-opacity']
-    }
-  });
-
-  // Add highlight layer for selected polygon
-  map.addLayer({
-    id: 'neighborhood-highlight',
-    type: 'line',
-    source: 'neighborhoods',
-    paint: {
-      'line-color': '#2563eb',
-      'line-width': [
-        'case',
-        ['boolean', ['feature-state', 'selected'], false],
-        4,
-        0
-      ],
-      'line-opacity': [
-        'case',
-        ['boolean', ['feature-state', 'selected'], false],
-        1,
-        0
-      ]
-    }
-  });
+  // Add your GeoJSON polygons and layers
+  loadNeighborhoodsGeojson(map, neighborhoodGeojson);
 
   // Create a reusable popup instance
   const popup = createPopup();
@@ -111,7 +48,7 @@ async function loadNeighborhoodsGeojson() {
 
   // Fit map to all neighborhoods on initial load
   fitMapToAllNeighborhoods(map, neighborhoodGeojson);
-}
+});
 
 // ========== NEW FILTER SYSTEM (Phase 2A) ==========
 
