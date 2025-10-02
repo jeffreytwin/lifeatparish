@@ -383,7 +383,7 @@ export function applyFilters(map, geojson, getSelectedId, setSelectedId, closeDe
   });
 
   updateMapVisibility(map);
-  updateFilterUICallback(matchedCount);
+  updateFilterUICallback(matchedCount, geojson);
   fitMapToMatches(map, matchedFeatures);
 }
 
@@ -436,6 +436,79 @@ export function updateMapVisibility(map) {
     0,
     ['get', 'stroke-opacity']
   ]);
+}
+
+// ========== UI UPDATE FUNCTIONS ==========
+
+/**
+ * Update Filter UI
+ * @param {number} matchedCount - Number of matched neighborhoods
+ * @param {Object} geojson - The GeoJSON data
+ */
+export function updateFilterUI(matchedCount, geojson) {
+  const totalFilters =
+    filterState.homeTypes.length +
+    filterState.amenities.length +
+    filterState.bedrooms.length +
+    (filterState.forSale !== 'all' ? 1 : 0) +
+    (filterState.gated ? 1 : 0) +
+    (filterState.age55Plus ? 1 : 0) +
+    (filterState.search ? 1 : 0) +
+    (filterState.priceMin !== 200 || filterState.priceMax !== 6000 ? 1 : 0);
+
+  const badge = document.getElementById('active-filters-badge');
+  const clearAllBtn = document.getElementById('clear-all-filters');
+
+  if (totalFilters > 0) {
+    badge.classList.remove('hidden');
+    clearAllBtn.classList.remove('hidden');
+    document.getElementById('filter-count').textContent = totalFilters;
+  } else {
+    badge.classList.add('hidden');
+    clearAllBtn.classList.add('hidden');
+  }
+
+  updateResultsCounter(matchedCount, geojson);
+
+  const noResults = document.getElementById('no-results');
+  if (matchedCount === 0 && totalFilters > 0) {
+    noResults.classList.remove('hidden');
+  } else {
+    noResults.classList.add('hidden');
+  }
+}
+
+/**
+ * Update Results Counter
+ * @param {number} matchedCount - Number of matched neighborhoods
+ * @param {Object} geojson - The GeoJSON data
+ */
+export function updateResultsCounter(matchedCount, geojson) {
+  const total = geojson.features.length;
+  const matched = matchedCount !== undefined ? matchedCount : total;
+  document.getElementById('matched-count').textContent = matched;
+  document.getElementById('total-count').textContent = total;
+}
+
+/**
+ * Setup all filters
+ * @param {Object} geojson - The GeoJSON data
+ * @param {Function} applyFiltersCallback - Callback to apply filters
+ */
+export function setupFilters(geojson, applyFiltersCallback) {
+  // Initialize UI components
+  populateHomeTypes(applyFiltersCallback);
+  populateAmenities(geojson, applyFiltersCallback);
+  populateBedrooms(applyFiltersCallback);
+  setupPriceSlider(applyFiltersCallback);
+  setupSearch(applyFiltersCallback);
+  setupAmenitiesDropdown();
+  setupForSaleFilter(applyFiltersCallback);
+  setupCommunityFeatures(applyFiltersCallback);
+  setupClearAll(applyFiltersCallback);
+
+  // Initial display
+  updateResultsCounter(undefined, geojson);
 }
 
 // ========== HELPER FUNCTIONS ==========
