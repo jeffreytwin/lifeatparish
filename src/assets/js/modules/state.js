@@ -37,3 +37,24 @@ export function getSelectedNeighborhoodId() {
 export function setSelectedNeighborhoodId(id) {
   selectedNeighborhoodId = id;
 }
+
+/**
+ * Houses for sale data storage
+ */
+let housesForSale = [];
+
+/**
+ * Get all houses for sale
+ * @returns {Array} Array of house objects
+ */
+export function getHousesForSale() {
+  return housesForSale;
+}
+
+/**
+ * Set houses for sale data
+ * @param {Array} houses - Array of house objects
+ */
+export function setHousesForSale(houses) {
+  housesForSale = houses;
+}

@@ -1,10 +1,10 @@
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
-import { getSelectedNeighborhoodId, setSelectedNeighborhoodId } from './modules/state.js';
-import { fetchNeighborhoods, fetchHousesForSale, fetchFloorPlans } from './modules/api.js';
-import { initDetailsPanel, showNeighborhoodDetails, closeDetailsPanel } from './modules/details-panel.js';
-import { fetchNeighborhoodGeojson, createPopup, fitMapToAllNeighborhoods, setupMapInteractions, loadNeighborhoodsGeojson } from './modules/map.js';
-import { setupFilters, updateFilterUI, applyFilters as applyFiltersModule } from './modules/filters.js';
+import { fetchFloorPlans, fetchHousesForSale } from './modules/api.js';
+import { closeDetailsPanel, initDetailsPanel, showNeighborhoodDetails } from './modules/details-panel.js';
+import { applyFilters as applyFiltersModule, setupFilters, updateFilterUI } from './modules/filters.js';
+import { createPopup, fetchNeighborhoodGeojson, fitMapToAllNeighborhoods, loadNeighborhoodsGeojson, setupMapInteractions } from './modules/map.js';
+import { getSelectedNeighborhoodId, setHousesForSale, setSelectedNeighborhoodId } from './modules/state.js';
 
 const neighborhoodGeojson = await fetchNeighborhoodGeojson()
 
@@ -19,9 +19,17 @@ const map = new mapboxgl.Map({
 });
 
 // fetch data from wix
-fetchNeighborhoods();
-fetchHousesForSale();
+// fetchNeighborhoods();
 fetchFloorPlans();
+
+// Fetch houses and store in state
+fetchHousesForSale().then(houses => {
+  setHousesForSale(houses || []);
+  console.log(`Loaded ${houses?.length || 0} houses for sale`);
+}).catch(error => {
+  console.error('Error fetching houses:', error);
+  setHousesForSale([]);
+});
 
 map.on('load', () => {
   // Add your GeoJSON polygons and layers
