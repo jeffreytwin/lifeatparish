@@ -123,6 +123,36 @@ export function populateBedrooms(applyFiltersCallback) {
   });
 }
 
+/**
+ * Populate Garages Filter
+ * @param {Function} applyFiltersCallback - Callback to apply filters
+ */
+export function populateGarages(applyFiltersCallback) {
+  const container = document.getElementById('garages-container');
+  const garageOptions = ['1-2', '3-4', '5+'];
+
+  garageOptions.forEach(range => {
+    const btn = document.createElement('button');
+    btn.className = 'px-4 py-2 border-2 border-gray-200 rounded-lg hover:border-[#2C9E36] transition-colors';
+    btn.textContent = range;
+
+    btn.addEventListener('click', () => {
+      if (filterState.garages.includes(range)) {
+        filterState.garages = filterState.garages.filter(g => g !== range);
+        btn.classList.remove('bg-[#2C9E36]', 'text-white', 'border-[#2C9E36]');
+        btn.classList.add('border-gray-200');
+      } else {
+        filterState.garages.push(range);
+        btn.classList.add('bg-[#2C9E36]', 'text-white', 'border-[#2C9E36]');
+        btn.classList.remove('border-gray-200');
+      }
+      applyFiltersCallback();
+    });
+
+    container.appendChild(btn);
+  });
+}
+
 // ========== SETUP FUNCTIONS ==========
 
 /**
@@ -365,6 +395,7 @@ export function setupClearAll(applyFiltersCallback) {
     filterState.homeTypes = [];
     filterState.amenities = [];
     filterState.bedrooms = [];
+    filterState.garages = [];
     filterState.forSale = 'all';
 
     // Reset UI
@@ -377,6 +408,10 @@ export function setupClearAll(applyFiltersCallback) {
       btn.classList.add('border-gray-200');
     });
     document.querySelectorAll('#bedrooms-container button').forEach(btn => {
+      btn.classList.remove('bg-[#2C9E36]', 'text-white', 'border-[#2C9E36]');
+      btn.classList.add('border-gray-200');
+    });
+    document.querySelectorAll('#garages-container button').forEach(btn => {
       btn.classList.remove('bg-[#2C9E36]', 'text-white', 'border-[#2C9E36]');
       btn.classList.add('border-gray-200');
     });
@@ -431,6 +466,7 @@ export function applyFilters(map, geojson, getSelectedId, setSelectedId, closeDe
   const hasPriceFilter = filterState.priceMin !== defaultPriceRange.min || filterState.priceMax !== defaultPriceRange.max;
   const hasHouseFilters = filterState.homeTypes.length > 0 ||
                           filterState.bedrooms.length > 0 ||
+                          filterState.garages.length > 0 ||
                           hasPriceFilter;
 
   let matchingVillages = null;
@@ -457,6 +493,20 @@ export function applyFilters(map, geojson, getSelectedId, setSelectedId, closeDe
           return false;
         });
         matches = matches && matchesBedrooms;
+      }
+
+      // Garage filter
+      if (filterState.garages.length > 0) {
+        // Extract number from "2 Car" string format
+        const garageStr = house.garages || '';
+        const garageCount = parseInt(garageStr) || 0;
+        const matchesGarages = filterState.garages.some(range => {
+          if (range === '1-2') return garageCount >= 1 && garageCount <= 2;
+          if (range === '3-4') return garageCount >= 3 && garageCount <= 4;
+          if (range === '5+') return garageCount >= 5;
+          return false;
+        });
+        matches = matches && matchesGarages;
       }
 
       // Price filter - use listingPricePure (already a number)
@@ -606,6 +656,7 @@ export function updateFilterUI(matchedCount, geojson) {
     filterState.homeTypes.length +
     filterState.amenities.length +
     filterState.bedrooms.length +
+    filterState.garages.length +
     (filterState.forSale !== 'all' ? 1 : 0) +
     (filterState.search ? 1 : 0) +
     (filterState.priceMin !== defaultPriceRange.min || filterState.priceMax !== defaultPriceRange.max ? 1 : 0);
@@ -655,6 +706,7 @@ export function setupFilters(geojson, houses, applyFiltersCallback) {
   populateHomeTypes(houses, applyFiltersCallback);
   populateAmenities(geojson, applyFiltersCallback);
   populateBedrooms(applyFiltersCallback);
+  populateGarages(applyFiltersCallback);
   setupPriceSlider(houses, applyFiltersCallback);
   setupSearch(applyFiltersCallback);
   setupAmenitiesDropdown();

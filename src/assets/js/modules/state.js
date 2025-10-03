@@ -12,6 +12,7 @@ export const filterState = {
   homeTypes: [],
   amenities: [],
   bedrooms: [],
+  garages: [],
   forSale: 'all'
 };
 

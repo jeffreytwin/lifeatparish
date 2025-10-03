@@ -187,6 +187,19 @@ function filterHousesByNeighborhood(neighborhoodName) {
       if (!matchesBedrooms) return false;
     }
 
+    // Apply garage filter
+    if (filterState.garages.length > 0) {
+      const garageStr = house.garages || '';
+      const garageCount = parseInt(garageStr) || 0;
+      const matchesGarages = filterState.garages.some(range => {
+        if (range === '1-2') return garageCount >= 1 && garageCount <= 2;
+        if (range === '3-4') return garageCount >= 3 && garageCount <= 4;
+        if (range === '5+') return garageCount >= 5;
+        return false;
+      });
+      if (!matchesGarages) return false;
+    }
+
     // Apply price filter
     const hasPriceFilter = filterState.priceMin !== defaultPriceRange.min || filterState.priceMax !== defaultPriceRange.max;
     if (hasPriceFilter) {
