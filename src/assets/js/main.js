@@ -56,6 +56,49 @@ map.on('load', () => {
   // Setup details panel
   initDetailsPanel(map);
 
+  // Add zoom controls
+  map.addControl(new mapboxgl.NavigationControl({
+    showCompass: false,
+    showZoom: true
+  }), 'bottom-right');
+
+  // Create custom fit bounds control
+  class FitBoundsControl {
+    onAdd(map) {
+      this.map = map;
+      this.container = document.createElement('div');
+      this.container.className = 'mapboxgl-ctrl mapboxgl-ctrl-group';
+
+      const button = document.createElement('button');
+      button.className = 'mapboxgl-ctrl-icon';
+      button.type = 'button';
+      button.title = 'Fit to all neighborhoods';
+      button.style.display = 'flex';
+      button.style.alignItems = 'center';
+      button.style.justifyContent = 'center';
+      button.innerHTML = `
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M3 3L7 3M3 3L3 7M3 3L7 7M17 3L13 3M17 3V7M17 3L13 7M3 17L7 17M3 17L3 13M3 17L7 13M17 17H13M17 17V13M17 17L13 13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      `;
+      button.setAttribute('aria-label', 'Fit to all neighborhoods');
+
+      button.onclick = () => {
+        fitMapToAllNeighborhoods(map, neighborhoodGeojson);
+      };
+
+      this.container.appendChild(button);
+      return this.container;
+    }
+
+    onRemove() {
+      this.container.parentNode.removeChild(this.container);
+      this.map = undefined;
+    }
+  }
+
+  map.addControl(new FitBoundsControl(), 'bottom-right');
+
   // Initialize filters if houses are already loaded
   const houses = getHousesForSale();
   if (houses.length > 0) {
