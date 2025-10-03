@@ -211,11 +211,9 @@ function filterHousesByNeighborhood(neighborhoodName) {
       if (!hasAllAmenities) return false;
     }
 
-    // Apply for sale filter (new construction vs existing)
-    if (filterState.forSale !== 'all') {
-      if (filterState.forSale === 'new' && !house.new_construction) return false;
-      if (filterState.forSale === 'existing' && house.new_construction) return false;
-    }
+    // Note: For Sale filter (new construction vs existing) is neighborhood-based,
+    // so if we're viewing a neighborhood, it already matches the forSale criteria.
+    // No need to filter individual houses by this.
 
     return true;
   });

@@ -4,7 +4,7 @@ import { fetchFloorPlans, fetchHousesForSale } from './modules/api.js';
 import { closeDetailsPanel, initDetailsPanel, showNeighborhoodDetails } from './modules/details-panel.js';
 import { applyFilters as applyFiltersModule, setupFilters, updateFilterUI } from './modules/filters.js';
 import { createPopup, fetchNeighborhoodGeojson, fitMapToAllNeighborhoods, loadNeighborhoodsGeojson, setupMapInteractions } from './modules/map.js';
-import { getSelectedNeighborhoodId, getHousesForSale, setHousesForSale, setSelectedNeighborhoodId } from './modules/state.js';
+import { getHousesForSale, getSelectedNeighborhoodId, setHousesForSale, setSelectedNeighborhoodId } from './modules/state.js';
 
 const neighborhoodGeojson = await fetchNeighborhoodGeojson()
 

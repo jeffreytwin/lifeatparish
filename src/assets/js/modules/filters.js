@@ -442,7 +442,6 @@ export function applyFilters(map, geojson, getSelectedId, setSelectedId, closeDe
   const hasPriceFilter = filterState.priceMin !== defaultPriceRange.min || filterState.priceMax !== defaultPriceRange.max;
   const hasHouseFilters = filterState.homeTypes.length > 0 ||
                           filterState.bedrooms.length > 0 ||
-                          filterState.forSale !== 'all' ||
                           hasPriceFilter;
 
   let matchingVillages = null;
@@ -493,15 +492,6 @@ export function applyFilters(map, geojson, getSelectedId, setSelectedId, closeDe
         }
       }
 
-      // For Sale status filter
-      if (filterState.forSale !== 'all') {
-        if (filterState.forSale === 'new') {
-          matches = matches && house.new_construction === true;
-        } else if (filterState.forSale === 'existing') {
-          matches = matches && !house.new_construction;
-        }
-      }
-
       return matches;
     });
 
@@ -537,6 +527,15 @@ export function applyFilters(map, geojson, getSelectedId, setSelectedId, closeDe
 
     if (matches && filterState.age55Plus) {
       matches = matches && props.age55Plus === true;
+    }
+
+    // For Sale status filter (neighborhood-level)
+    if (matches && filterState.forSale !== 'all') {
+      if (filterState.forSale === 'new') {
+        matches = matches && props.new_construction === true;
+      } else if (filterState.forSale === 'existing') {
+        matches = matches && props.new_construction === false;
+      }
     }
 
     // Step 4: Intersect with house-based filters (if active)

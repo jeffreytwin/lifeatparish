@@ -19,7 +19,7 @@ const wixClient = createClient({
  */
 export async function fetchNeighborhoods() {
   const result = await wixClient.items
-    .query('Neighborhoods')
+    .query('neighborhoods')
     .find();
 
   console.log('items', result);
