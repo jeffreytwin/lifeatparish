@@ -348,15 +348,8 @@ export function setupForSaleFilter(applyFiltersCallback) {
  * @param {Function} applyFiltersCallback - Callback to apply filters
  */
 export function setupCommunityFeatures(applyFiltersCallback) {
-  document.getElementById('filter-gated').addEventListener('change', (e) => {
-    filterState.gated = e.target.checked;
-    applyFiltersCallback();
-  });
-
-  document.getElementById('filter-55plus').addEventListener('change', (e) => {
-    filterState.age55Plus = e.target.checked;
-    applyFiltersCallback();
-  });
+  // Community features filter removed - gated and age55Plus fields don't exist in data
+  // These features can be searched via the amenities filter instead
 }
 
 /**
@@ -373,8 +366,6 @@ export function setupClearAll(applyFiltersCallback) {
     filterState.amenities = [];
     filterState.bedrooms = [];
     filterState.forSale = 'all';
-    filterState.gated = false;
-    filterState.age55Plus = false;
 
     // Reset UI
     document.getElementById('search-input').value = '';
@@ -393,8 +384,6 @@ export function setupClearAll(applyFiltersCallback) {
     document.getElementById('selected-amenities').innerHTML = '';
     updateAmenitiesPlaceholder();
     document.querySelector('input[name="forSale"][value="all"]').checked = true;
-    document.getElementById('filter-gated').checked = false;
-    document.getElementById('filter-55plus').checked = false;
 
     // Re-trigger slider update
     document.getElementById('price-min').dispatchEvent(new Event('input'));
@@ -520,15 +509,6 @@ export function applyFilters(map, geojson, getSelectedId, setSelectedId, closeDe
       matches = matches && filterState.amenities.every(amenity => propAmenities.includes(amenity));
     }
 
-    // Community features
-    if (matches && filterState.gated) {
-      matches = matches && props.gated === true;
-    }
-
-    if (matches && filterState.age55Plus) {
-      matches = matches && props.age55Plus === true;
-    }
-
     // For Sale status filter (neighborhood-level)
     if (matches && filterState.forSale !== 'all') {
       if (filterState.forSale === 'new') {
@@ -627,8 +607,6 @@ export function updateFilterUI(matchedCount, geojson) {
     filterState.amenities.length +
     filterState.bedrooms.length +
     (filterState.forSale !== 'all' ? 1 : 0) +
-    (filterState.gated ? 1 : 0) +
-    (filterState.age55Plus ? 1 : 0) +
     (filterState.search ? 1 : 0) +
     (filterState.priceMin !== defaultPriceRange.min || filterState.priceMax !== defaultPriceRange.max ? 1 : 0);
 

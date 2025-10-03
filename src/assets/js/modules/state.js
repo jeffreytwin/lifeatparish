@@ -12,9 +12,7 @@ export const filterState = {
   homeTypes: [],
   amenities: [],
   bedrooms: [],
-  forSale: 'all',
-  gated: false,
-  age55Plus: false
+  forSale: 'all'
 };
 
 /**
