@@ -594,6 +594,8 @@ export function fitMapToMatches(map, matchedFeatures) {
  * @param {mapboxgl.Map} map - The map instance
  */
 export function updateMapVisibility(map) {
+  // Note: Mapbox doesn't support feature-state in layer filters
+  // So we use opacity to hide, but need to handle pointer events in event handlers
   map.setPaintProperty('neighborhood-fills', 'fill-opacity', [
     'case',
     ['boolean', ['feature-state', 'hidden'], false],
