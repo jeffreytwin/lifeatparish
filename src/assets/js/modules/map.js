@@ -139,38 +139,20 @@ export function setupMapInteractions(map, popup, getSelectedId, setSelectedId, s
   // Hover effect - brighten polygon and show tooltip
   map.on('mousemove', 'neighborhood-fills', (e) => {
     if (e.features.length > 0) {
-      const feature = e.features[0];
-      const featureState = map.getFeatureState({ source: 'neighborhoods', id: feature.id });
-
-      // Skip if feature is hidden
-      if (featureState.hidden) {
-        // Clear any previous hover state and hide popup
-        if (hoveredNeighborhoodId !== null) {
-          map.setFeatureState(
-            { source: 'neighborhoods', id: hoveredNeighborhoodId },
-            { hover: false }
-          );
-          hoveredNeighborhoodId = null;
-        }
-        popup.remove();
-        map.getCanvas().style.cursor = '';
-        return;
-      }
-
       if (hoveredNeighborhoodId !== null) {
         map.setFeatureState(
           { source: 'neighborhoods', id: hoveredNeighborhoodId },
           { hover: false }
         );
       }
-      hoveredNeighborhoodId = feature.id;
+      hoveredNeighborhoodId = e.features[0].id;
       map.setFeatureState(
         { source: 'neighborhoods', id: hoveredNeighborhoodId },
         { hover: true }
       );
 
       // Show popup tooltip
-      const properties = feature.properties;
+      const properties = e.features[0].properties;
       const coordinates = e.lngLat;
 
       // Build popup HTML with enhanced styling
@@ -223,12 +205,6 @@ export function setupMapInteractions(map, popup, getSelectedId, setSelectedId, s
   map.on('click', 'neighborhood-fills', (e) => {
     if (e.features.length > 0) {
       const clickedFeature = e.features[0];
-      const featureState = map.getFeatureState({ source: 'neighborhoods', id: clickedFeature.id });
-
-      // Skip if feature is hidden
-      if (featureState.hidden) {
-        return;
-      }
 
       // Clear previous selection
       if (getSelectedId() !== null) {

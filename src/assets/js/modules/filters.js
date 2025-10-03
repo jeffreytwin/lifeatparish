@@ -2,9 +2,9 @@
  * Filter System
  */
 
-import { filterState, getHousesForSale, setDefaultPriceRange, defaultPriceRange } from './state.js';
-import { formatPrice, debounce } from './utils.js';
 import mapboxgl from 'mapbox-gl';
+import { defaultPriceRange, filterState, getHousesForSale, setDefaultPriceRange } from './state.js';
+import { debounce, formatPrice } from './utils.js';
 
 // ========== POPULATION FUNCTIONS ==========
 
@@ -465,9 +465,9 @@ export function applyFilters(map, geojson, getSelectedId, setSelectedId, closeDe
   // Step 1: Check if we have house-based filters active
   const hasPriceFilter = filterState.priceMin !== defaultPriceRange.min || filterState.priceMax !== defaultPriceRange.max;
   const hasHouseFilters = filterState.homeTypes.length > 0 ||
-                          filterState.bedrooms.length > 0 ||
-                          filterState.garages.length > 0 ||
-                          hasPriceFilter;
+    filterState.bedrooms.length > 0 ||
+    filterState.garages.length > 0 ||
+    hasPriceFilter;
 
   let matchingVillages = null;
 
@@ -542,6 +542,7 @@ export function applyFilters(map, geojson, getSelectedId, setSelectedId, closeDe
   // Step 3: Apply neighborhood-based filters
   let matchedCount = 0;
   const matchedFeatures = [];
+  const visibleFeatureIds = [];
 
   features.forEach((feature, index) => {
     const props = feature.properties;
@@ -574,19 +575,14 @@ export function applyFilters(map, geojson, getSelectedId, setSelectedId, closeDe
       matches = matches && matchingVillages.has(neighborhoodName);
     }
 
-    // Update visibility
-    map.setFeatureState(
-      { source: 'neighborhoods', id: index },
-      { hidden: !matches }
-    );
-
     if (matches) {
       matchedCount++;
       matchedFeatures.push(feature);
+      visibleFeatureIds.push(index); // Collect visible feature IDs
     }
   });
 
-  updateMapVisibility(map);
+  updateMapVisibility(map, visibleFeatureIds);
   updateFilterUICallback(matchedCount, geojson);
   fitMapToMatches(map, matchedFeatures);
 }
@@ -619,29 +615,19 @@ export function fitMapToMatches(map, matchedFeatures) {
 }
 
 /**
- * Update map visibility based on feature state
+ * Update map visibility using layer filters
  * @param {mapboxgl.Map} map - The map instance
+ * @param {Array} visibleFeatureIds - Array of feature IDs that should be visible
  */
-export function updateMapVisibility(map) {
-  // Note: Mapbox doesn't support feature-state in layer filters
-  // So we use opacity to hide, but need to handle pointer events in event handlers
-  map.setPaintProperty('neighborhood-fills', 'fill-opacity', [
-    'case',
-    ['boolean', ['feature-state', 'hidden'], false],
-    0,
-    ['boolean', ['feature-state', 'selected'], false],
-    0.8,
-    ['boolean', ['feature-state', 'hover'], false],
-    0.8,
-    ['get', 'fill-opacity']
-  ]);
+export function updateMapVisibility(map, visibleFeatureIds) {
+  // Use setFilter with match expression to completely exclude hidden features
+  const filterExpression = visibleFeatureIds.length > 0
+    ? ['match', ['id'], visibleFeatureIds, true, false]
+    : ['literal', true]; // Show all if no filter active
 
-  map.setPaintProperty('neighborhood-borders', 'line-opacity', [
-    'case',
-    ['boolean', ['feature-state', 'hidden'], false],
-    0,
-    ['get', 'stroke-opacity']
-  ]);
+  map.setFilter('neighborhood-fills', filterExpression);
+  map.setFilter('neighborhood-borders', filterExpression);
+  map.setFilter('neighborhood-highlight', filterExpression);
 }
 
 // ========== UI UPDATE FUNCTIONS ==========
