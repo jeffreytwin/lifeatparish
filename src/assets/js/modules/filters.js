@@ -2,7 +2,7 @@
  * Filter System
  */
 
-import { filterState } from './state.js';
+import { filterState, getHousesForSale } from './state.js';
 import { formatPrice, debounce } from './utils.js';
 import mapboxgl from 'mapbox-gl';
 
@@ -96,7 +96,7 @@ export function populateAmenities(geojson, applyFiltersCallback) {
  * @param {Function} applyFiltersCallback - Callback to apply filters
  */
 export function populateBedrooms(applyFiltersCallback) {
-  const bedroomOptions = ['2-3', '3-4', '4-5', '5+'];
+  const bedroomOptions = ['1-2', '3-4', '5+'];
   const container = document.getElementById('bedrooms-container');
 
   bedroomOptions.forEach(range => {
@@ -333,49 +333,89 @@ export function applyFilters(map, geojson, getSelectedId, setSelectedId, closeDe
   }
   closeDetails();
 
-  let matchedCount = 0;
   const features = geojson.features;
+  const allHouses = getHousesForSale();
+
+  // Step 1: Check if we have house-based filters active
+  const hasHouseFilters = filterState.homeTypes.length > 0 ||
+                          filterState.bedrooms.length > 0 ||
+                          filterState.forSale !== 'all';
+
+  let matchingVillages = null;
+
+  // Step 2: If house filters are active, filter houses and get matching villages
+  if (hasHouseFilters && allHouses.length > 0) {
+    const filteredHouses = allHouses.filter(house => {
+      let matches = true;
+
+      // Home type filter
+      if (filterState.homeTypes.length > 0) {
+        matches = matches && filterState.homeTypes.includes(house.homeType);
+      }
+
+      // Bedroom filter - exact match
+      if (filterState.bedrooms.length > 0) {
+        const houseBeds = house.bedrooms || 0;
+        const matchesBedrooms = filterState.bedrooms.some(range => {
+          if (range === '1-2') return houseBeds >= 1 && houseBeds <= 2;
+          if (range === '3-4') return houseBeds >= 3 && houseBeds <= 4;
+          if (range === '5+') return houseBeds >= 5;
+          return false;
+        });
+        matches = matches && matchesBedrooms;
+      }
+
+      // For Sale status filter
+      if (filterState.forSale !== 'all') {
+        if (filterState.forSale === 'new') {
+          matches = matches && house.new_construction === true;
+        } else if (filterState.forSale === 'existing') {
+          matches = matches && !house.new_construction;
+        }
+      }
+
+      return matches;
+    });
+
+    // Extract unique villages from filtered houses
+    matchingVillages = new Set(filteredHouses.map(h => (h.village || '').toLowerCase()));
+    console.log(`House filters: ${filteredHouses.length} houses in ${matchingVillages.size} neighborhoods`);
+  }
+
+  // Step 3: Apply neighborhood-based filters
+  let matchedCount = 0;
   const matchedFeatures = [];
 
   features.forEach((feature, index) => {
     const props = feature.properties;
     let matches = true;
 
-    // Search filter
+    // Search filter (neighborhood name only)
     if (filterState.search) {
       const name = (props.neighborhood || '').toLowerCase();
-      const builder = (props.builder || '').toLowerCase();
-      const amenities = Array.isArray(props.amenities) ? props.amenities.join(' ').toLowerCase() : '';
-      matches = name.includes(filterState.search) || builder.includes(filterState.search) || amenities.includes(filterState.search);
+      matches = matches && name.includes(filterState.search);
     }
 
-    // Price range (stub - will be dynamic later)
-    // For now, just pass through
-
-    // Home types - disabled for Phase 2A (no homeType property in GeoJSON)
-    // Will be implemented in Phase 2B with Wix data
-    // if (matches && filterState.homeTypes.length > 0) {
-    //   const propHomeType = props.homeType || '';
-    //   matches = filterState.homeTypes.some(type => propHomeType.includes(type));
-    // }
-
-    // Amenities
+    // Amenities filter (neighborhood-level)
     if (matches && filterState.amenities.length > 0) {
       const propAmenities = props.amenities || [];
-      matches = filterState.amenities.every(amenity => propAmenities.includes(amenity));
+      matches = matches && filterState.amenities.every(amenity => propAmenities.includes(amenity));
     }
 
-    // For Sale
-    if (matches && filterState.forSale !== 'all') {
-      if (filterState.forSale === 'new') {
-        matches = props.new_construction === true;
-      } else if (filterState.forSale === 'existing') {
-        matches = !props.new_construction;
-      }
+    // Community features
+    if (matches && filterState.gated) {
+      matches = matches && props.gated === true;
     }
 
-    // Gated (stub for now)
-    // Will implement when we have the data
+    if (matches && filterState.age55Plus) {
+      matches = matches && props.age55Plus === true;
+    }
+
+    // Step 4: Intersect with house-based filters (if active)
+    if (matches && matchingVillages !== null) {
+      const neighborhoodName = (props.neighborhood || '').toLowerCase();
+      matches = matches && matchingVillages.has(neighborhoodName);
+    }
 
     // Update visibility
     map.setFeatureState(
