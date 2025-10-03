@@ -25,6 +25,12 @@ fetchHousesForSale().then(houses => {
   setHousesForSale(houses || []);
   console.log(`Loaded ${houses?.length || 0} houses for sale`);
 
+  // Hide loading overlay
+  const loadingOverlay = document.getElementById('sidebar-loading');
+  if (loadingOverlay) {
+    loadingOverlay.classList.add('hidden');
+  }
+
   // Setup filters once houses are loaded
   if (map.loaded()) {
     initializeFilters();
@@ -32,6 +38,13 @@ fetchHousesForSale().then(houses => {
 }).catch(error => {
   console.error('Error fetching houses:', error);
   setHousesForSale([]);
+
+  // Hide loading overlay even on error
+  const loadingOverlay = document.getElementById('sidebar-loading');
+  if (loadingOverlay) {
+    loadingOverlay.classList.add('hidden');
+    loadingOverlay.innerHTML = '<div class="loading-text" style="color: #ef4444;">Error loading homes data</div>';
+  }
 });
 
 map.on('load', () => {
@@ -101,6 +114,12 @@ map.on('load', () => {
   const houses = getHousesForSale();
   if (houses.length > 0) {
     initializeFilters();
+
+    // Hide loading overlay since houses are already loaded
+    const loadingOverlay = document.getElementById('sidebar-loading');
+    if (loadingOverlay) {
+      loadingOverlay.classList.add('hidden');
+    }
   }
 
   // Fit map to all neighborhoods on initial load

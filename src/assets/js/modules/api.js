@@ -47,6 +47,7 @@ export async function fetchHousesForSale() {
   let result = await wixClient.items
     .query('HousesforSale')
     .fields(...requiredFields)
+    .limit(300)
     .find();
 
   pageCount++;
