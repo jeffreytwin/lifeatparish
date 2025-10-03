@@ -2,7 +2,7 @@
  * Details Panel Management
  */
 
-import { filterState, getHousesForSale, defaultPriceRange } from './state.js';
+import { defaultPriceRange, filterState, getHousesForSale } from './state.js';
 
 let map = null;
 
@@ -58,6 +58,9 @@ export function showNeighborhoodDetails(neighborhood) {
 
   headerElement.appendChild(headerWrapper);
 
+  // Filter houses first to get count
+  const filteredHouses = filterHousesByNeighborhood(neighborhood.neighborhood);
+
   // Add neighborhood stats (price range, home types)
   const statsContainer = document.createElement('div');
   statsContainer.className = 'space-y-1 mb-3';
@@ -71,6 +74,15 @@ export function showNeighborhoodDetails(neighborhood) {
     `;
     statsContainer.appendChild(priceRow);
   }
+
+  // Add homes for sale count
+  const homesCountRow = document.createElement('div');
+  homesCountRow.className = 'flex items-center gap-2 text-xs';
+  homesCountRow.innerHTML = `
+    <span class="font-semibold text-gray-600">Homes for Sale:</span>
+    <span class="text-[#2C9E36] font-bold">${filteredHouses.length}</span>
+  `;
+  statsContainer.appendChild(homesCountRow);
 
   headerElement.appendChild(statsContainer);
 
@@ -135,8 +147,7 @@ export function showNeighborhoodDetails(neighborhood) {
     headerElement.appendChild(amenitiesContainer);
   }
 
-  // Filter and display houses for this neighborhood
-  const filteredHouses = filterHousesByNeighborhood(neighborhood.neighborhood);
+  // Display house cards (filteredHouses already computed above)
   renderHouseCards(filteredHouses);
 
   // Show panel with animation
@@ -270,12 +281,6 @@ function renderHouseCards(houses) {
 
   // Clear existing content
   housesContainer.innerHTML = '';
-
-  // Add section title
-  const title = document.createElement('h3');
-  title.className = 'text-lg font-bold text-gray-900 mb-4';
-  title.textContent = `Homes for Sale (${houses.length})`;
-  housesContainer.appendChild(title);
 
   // Show message if no houses
   if (houses.length === 0) {

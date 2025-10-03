@@ -5,4 +5,14 @@ export default defineConfig({
     plugins: [
         tailwindcss(),
     ],
+    build: {
+        rollupOptions: {
+            output: {
+                manualChunks: {
+                    'mapbox': ['mapbox-gl'],
+                    'wix': ['@wix/data', '@wix/sdk'],
+                }
+            }
+        }
+    }
 })

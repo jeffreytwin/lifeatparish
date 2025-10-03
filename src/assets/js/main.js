@@ -1,6 +1,6 @@
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
-import { fetchFloorPlans, fetchHousesForSale } from './modules/api.js';
+import { fetchHousesForSale } from './modules/api.js';
 import { closeDetailsPanel, initDetailsPanel, showNeighborhoodDetails } from './modules/details-panel.js';
 import { applyFilters as applyFiltersModule, setupFilters, updateFilterUI } from './modules/filters.js';
 import { createPopup, fetchNeighborhoodGeojson, fitMapToAllNeighborhoods, loadNeighborhoodsGeojson, setupMapInteractions } from './modules/map.js';
@@ -19,8 +19,6 @@ const map = new mapboxgl.Map({
 });
 
 // fetch data from wix
-// fetchNeighborhoods();
-fetchFloorPlans();
 
 // Fetch houses and store in state
 fetchHousesForSale().then(houses => {
