@@ -2,7 +2,6 @@
  * Details Panel Management
  */
 
-import { createImageCarousel } from './image-carousel.js';
 import { filterState, getHousesForSale, defaultPriceRange } from './state.js';
 
 let map = null;
@@ -281,33 +280,6 @@ function renderHouseCards(houses) {
 }
 
 /**
- * Extract image URLs from Wix listingImageGallery
- * @param {Array} imageGallery - Array of Wix image objects
- * @returns {Array<string>} Array of image URLs
- */
-function extractImageUrls(imageGallery) {
-  if (!imageGallery || !Array.isArray(imageGallery)) return [];
-
-  return imageGallery
-    .filter(img => img.type === 'Image' && img.src)
-    .map(img => {
-      // Convert Wix image format to usable URL
-      const src = img.src;
-      if (src.startsWith('wix:image://')) {
-        // Extract the image ID (the part before the slash after v1/)
-        // Format: wix:image://v1/32a977_XXXXX~mv2.jpeg/filename.jpeg
-        const match = src.match(/wix:image:\/\/v1\/(.*?)\/(.*?)#/);
-        if (match) {
-          const imageId = match[1]; // e.g., "32a977_5d0782add1114e3baac09fe38627f662~mv2.jpeg"
-          // Use Wix's image service URL with proper format
-          return `https://static.wixstatic.com/media/${imageId}`;
-        }
-      }
-      return src;
-    });
-}
-
-/**
  * Get amenity icon SVG
  * @param {string} amenity - Amenity name
  * @returns {string} SVG icon HTML
@@ -368,12 +340,30 @@ function createHouseCard(house) {
   const imageWrapper = document.createElement('div');
   imageWrapper.className = 'relative';
 
-  // Extract images from listingImageGallery (limit to 2)
-  const images = extractImageUrls(house.listingImageGallery).slice(0, 2);
+  // Create single image element using listingPrimaryImage
+  const imageEl = document.createElement('img');
+  imageEl.className = 'w-full h-64 object-cover';
 
-  // Create image carousel
-  const carousel = createImageCarousel(images, house.fullAddress || house.streetAddress || 'House');
-  imageWrapper.appendChild(carousel);
+  // Convert Wix image format to usable URL
+  let imageUrl = 'https://via.placeholder.com/400x300?text=No+Image';
+  if (house.listingPrimaryImage) {
+    const src = house.listingPrimaryImage;
+    if (src.startsWith('wix:image://')) {
+      // Extract the image ID from Wix format
+      // Format: wix:image://v1/32a977_XXXXX~mv2.jpeg/filename.jpeg#originWidth=1600&originHeight=1067
+      const match = src.match(/wix:image:\/\/v1\/(.*?)\/(.*?)#/);
+      if (match) {
+        const imageId = match[1]; // e.g., "32a977_5d0782add1114e3baac09fe38627f662~mv2.jpeg"
+        imageUrl = `https://static.wixstatic.com/media/${imageId}`;
+      }
+    } else {
+      imageUrl = src;
+    }
+  }
+
+  imageEl.src = imageUrl;
+  imageEl.alt = house.fullAddress || house.streetAddress || 'House';
+  imageWrapper.appendChild(imageEl);
 
   // Amenity badges overlay on image
   if (house.amenities && house.amenities.length > 0) {

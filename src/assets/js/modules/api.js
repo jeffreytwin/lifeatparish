@@ -37,9 +37,29 @@ export async function fetchHousesForSale() {
 
   console.log('Fetching houses for sale with pagination...');
 
+  // Define only the fields we need to reduce payload size
+  const requiredFields = [
+    'homeType',
+    'bedrooms',
+    'bathrooms',
+    'garages',
+    'squareFeet',
+    'listingPrice',
+    'listingPricePure',
+    'listPrice',
+    'price',
+    'village',
+    'amenities',
+    'link',
+    'listingPrimaryImage',
+    'fullAddress',
+    'streetAddress'
+  ];
+
   // Get first page
   let result = await wixClient.items
     .query('HousesforSale')
+    .fields(...requiredFields)
     .find();
 
   pageCount++;
