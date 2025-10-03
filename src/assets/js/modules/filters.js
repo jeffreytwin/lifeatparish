@@ -475,6 +475,13 @@ export function applyFilters(map, geojson, getSelectedId, setSelectedId, closeDe
   if (hasHouseFilters && allHouses.length > 0) {
     let debugCount = 0; // For logging first few houses
 
+    console.log('🔍 House-based filters active:', {
+      homeTypes: filterState.homeTypes,
+      bedrooms: filterState.bedrooms,
+      garages: filterState.garages,
+      priceRange: hasPriceFilter ? `${filterState.priceMin}-${filterState.priceMax}` : 'none'
+    });
+
     const filteredHouses = allHouses.filter(house => {
       let matches = true;
 
@@ -506,6 +513,13 @@ export function applyFilters(map, geojson, getSelectedId, setSelectedId, closeDe
           if (range === '5+') return garageCount >= 5;
           return false;
         });
+
+        // Debug garage filter
+        if (filterState.garages.includes('5+') && debugCount < 3) {
+          console.log(`Garage check: "${garageStr}" → ${garageCount} → matches 5+? ${garageCount >= 5} → overall match: ${matchesGarages}`);
+          debugCount++;
+        }
+
         matches = matches && matchesGarages;
       }
 
@@ -520,13 +534,6 @@ export function applyFilters(map, geojson, getSelectedId, setSelectedId, closeDe
           matches = false; // Reject houses without valid prices when filtering by price
         } else {
           const inRange = price >= filterState.priceMin && price <= filterState.priceMax;
-
-          // Debug: Log first few houses when price filter is active
-          if (debugCount < 5) {
-            console.log(`House price check: $${priceRaw.toLocaleString()} (${price}K) - Range: ${filterState.priceMin}K-${filterState.priceMax}K - InRange: ${inRange}`);
-            debugCount++;
-          }
-
           matches = matches && inRange;
         }
       }
@@ -536,7 +543,8 @@ export function applyFilters(map, geojson, getSelectedId, setSelectedId, closeDe
 
     // Extract unique villages from filtered houses
     matchingVillages = new Set(filteredHouses.map(h => (h.village || '').toLowerCase()));
-    console.log(`House filters: ${filteredHouses.length} houses in ${matchingVillages.size} neighborhoods`);
+    console.log(`✅ House filters result: ${filteredHouses.length} houses in ${matchingVillages.size} neighborhoods`);
+    console.log('📍 Matching villages:', Array.from(matchingVillages));
   }
 
   // Step 3: Apply neighborhood-based filters
@@ -544,9 +552,13 @@ export function applyFilters(map, geojson, getSelectedId, setSelectedId, closeDe
   const matchedFeatures = [];
   const visibleFeatureIds = [];
 
+  console.log('🗺️ Starting neighborhood filtering. Total features:', features.length);
+  console.log('🏘️ matchingVillages:', matchingVillages === null ? 'null (no house filters)' : `Set with ${matchingVillages.size} items`);
+
   features.forEach((feature, index) => {
     const props = feature.properties;
     let matches = true;
+    const neighborhoodName = (props.neighborhood || '').toLowerCase();
 
     // Search filter (neighborhood name only)
     if (filterState.search) {
@@ -570,9 +582,17 @@ export function applyFilters(map, geojson, getSelectedId, setSelectedId, closeDe
     }
 
     // Step 4: Intersect with house-based filters (if active)
-    if (matches && matchingVillages !== null) {
-      const neighborhoodName = (props.neighborhood || '').toLowerCase();
-      matches = matches && matchingVillages.has(neighborhoodName);
+    if (matchingVillages !== null) {
+      const beforeHouseFilter = matches;
+
+      // If house filters found zero matches, hide all neighborhoods
+      if (matchingVillages.size === 0) {
+        matches = false;
+        if (index < 3) console.log(`❌ "${neighborhoodName}": Hidden (zero houses match house filters)`);
+      } else {
+        matches = matches && matchingVillages.has(neighborhoodName);
+        if (index < 3) console.log(`"${neighborhoodName}": Before house filter=${beforeHouseFilter}, In village list=${matchingVillages.has(neighborhoodName)}, Final=${matches}`);
+      }
     }
 
     if (matches) {
@@ -581,6 +601,8 @@ export function applyFilters(map, geojson, getSelectedId, setSelectedId, closeDe
       visibleFeatureIds.push(index); // Collect visible feature IDs
     }
   });
+
+  console.log(`🎯 Final result: ${matchedCount} neighborhoods visible, ${visibleFeatureIds.length} feature IDs`);
 
   updateMapVisibility(map, visibleFeatureIds);
   updateFilterUICallback(matchedCount, geojson);
@@ -623,7 +645,7 @@ export function updateMapVisibility(map, visibleFeatureIds) {
   // Use setFilter with match expression to completely exclude hidden features
   const filterExpression = visibleFeatureIds.length > 0
     ? ['match', ['id'], visibleFeatureIds, true, false]
-    : ['literal', true]; // Show all if no filter active
+    : ['literal', false]; // Hide all if no neighborhoods match
 
   map.setFilter('neighborhood-fills', filterExpression);
   map.setFilter('neighborhood-borders', filterExpression);
