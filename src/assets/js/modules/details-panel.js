@@ -32,11 +32,31 @@ export function showNeighborhoodDetails(neighborhood) {
   const headerElement = document.querySelector('.details-header');
   headerElement.innerHTML = '';
 
+  // Create header wrapper with title and close button
+  const headerWrapper = document.createElement('div');
+  headerWrapper.className = 'flex items-start justify-between mb-2';
+
   // Add neighborhood title
   const title = document.createElement('h2');
-  title.className = 'text-2xl font-bold text-gray-900 mb-2';
+  title.className = 'text-2xl font-bold text-gray-900 flex-1';
   title.textContent = neighborhood.neighborhood || 'Neighborhood';
-  headerElement.appendChild(title);
+  headerWrapper.appendChild(title);
+
+  // Add close button
+  const closeButton = document.createElement('button');
+  closeButton.className = 'text-gray-400 hover:text-gray-600 transition-colors p-1 -mt-1';
+  closeButton.innerHTML = `
+    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+    </svg>
+  `;
+  closeButton.setAttribute('aria-label', 'Close details panel');
+  closeButton.addEventListener('click', () => {
+    closeDetailsPanel();
+  });
+  headerWrapper.appendChild(closeButton);
+
+  headerElement.appendChild(headerWrapper);
 
   // Add neighborhood stats (price range, home types)
   const statsContainer = document.createElement('div');
