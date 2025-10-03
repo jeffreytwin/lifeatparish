@@ -629,7 +629,7 @@ export function updateFilterUI(matchedCount, geojson) {
     (filterState.gated ? 1 : 0) +
     (filterState.age55Plus ? 1 : 0) +
     (filterState.search ? 1 : 0) +
-    (filterState.priceMin !== 200 || filterState.priceMax !== 6000 ? 1 : 0);
+    (filterState.priceMin !== defaultPriceRange.min || filterState.priceMax !== defaultPriceRange.max ? 1 : 0);
 
   const badge = document.getElementById('active-filters-badge');
   const clearAllBtn = document.getElementById('clear-all-filters');
