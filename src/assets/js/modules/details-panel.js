@@ -3,7 +3,7 @@
  */
 
 import { createImageCarousel } from './image-carousel.js';
-import { filterState, getHousesForSale } from './state.js';
+import { filterState, getHousesForSale, defaultPriceRange } from './state.js';
 
 let map = null;
 
@@ -175,17 +175,31 @@ function filterHousesByNeighborhood(neighborhoodName) {
     const houseVillage = house.village || '';
     if (houseVillage.toLowerCase() !== neighborhoodName.toLowerCase()) return false;
 
-    // Apply bedroom filter
+    // Apply bedroom filter (updated ranges: 1-2, 3-4, 5+)
     if (filterState.bedrooms.length > 0) {
       const houseBeds = house.bedrooms || 0;
       const matchesBedrooms = filterState.bedrooms.some(range => {
-        if (range === '2-3') return houseBeds >= 2 && houseBeds <= 3;
+        if (range === '1-2') return houseBeds >= 1 && houseBeds <= 2;
         if (range === '3-4') return houseBeds >= 3 && houseBeds <= 4;
-        if (range === '4-5') return houseBeds >= 4 && houseBeds <= 5;
         if (range === '5+') return houseBeds >= 5;
         return false;
       });
       if (!matchesBedrooms) return false;
+    }
+
+    // Apply price filter
+    const hasPriceFilter = filterState.priceMin !== defaultPriceRange.min || filterState.priceMax !== defaultPriceRange.max;
+    if (hasPriceFilter) {
+      const priceRaw = house.listingPricePure || parseFloat((house.listingPrice || '').replace(/[$,]/g, ''));
+      const price = priceRaw / 1000; // Convert to thousands
+
+      if (!price || price <= 0) {
+        return false; // Reject houses without valid prices
+      }
+
+      if (price < filterState.priceMin || price > filterState.priceMax) {
+        return false; // Reject houses outside price range
+      }
     }
 
     // Apply amenities filter

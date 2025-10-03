@@ -2,7 +2,7 @@
  * Filter System
  */
 
-import { filterState, getHousesForSale } from './state.js';
+import { filterState, getHousesForSale, setDefaultPriceRange, defaultPriceRange } from './state.js';
 import { formatPrice, debounce } from './utils.js';
 import mapboxgl from 'mapbox-gl';
 
@@ -126,16 +126,102 @@ export function populateBedrooms(applyFiltersCallback) {
 // ========== SETUP FUNCTIONS ==========
 
 /**
+ * Calculate dynamic price range from houses data
+ * @param {Array} houses - Array of houses
+ * @returns {Object} Object with min and max prices in thousands
+ */
+function calculatePriceRange(houses) {
+  if (!houses || houses.length === 0) {
+    console.log('No houses data, using fallback defaults');
+    return { min: 200, max: 6000 }; // Fallback defaults
+  }
+
+  console.log(`Analyzing ${houses.length} houses for price range...`);
+
+  let minPrice = Infinity;
+  let maxPrice = 0;
+  let validPriceCount = 0;
+
+  houses.forEach((house, index) => {
+    // Use listingPricePure (already a number) if available, otherwise parse listingPrice string
+    const priceRaw = house.listingPricePure || parseFloat((house.listingPrice || '').replace(/[$,]/g, ''));
+
+    if (index < 5) {
+      // Log first 5 houses for debugging
+      console.log(`House ${index}: listingPricePure=${house.listingPricePure}, listingPrice="${house.listingPrice}" -> using=${priceRaw}`);
+    }
+
+    if (priceRaw > 0) {
+      validPriceCount++;
+      if (priceRaw < minPrice) minPrice = priceRaw;
+      if (priceRaw > maxPrice) maxPrice = priceRaw;
+    }
+  });
+
+  console.log(`Found ${validPriceCount} houses with valid prices`);
+  console.log(`Raw min: $${minPrice.toLocaleString()}, Raw max: $${maxPrice.toLocaleString()}`);
+
+  // Convert to thousands and round
+  minPrice = Math.floor(minPrice / 1000);
+  maxPrice = Math.ceil(maxPrice / 1000);
+
+  console.log(`After converting to thousands: min=${minPrice}, max=${maxPrice}`);
+
+  // Add some padding and round to nice numbers
+  minPrice = Math.floor(minPrice / 50) * 50; // Round down to nearest 50K
+  maxPrice = Math.ceil(maxPrice / 50) * 50;   // Round up to nearest 50K
+
+  console.log(`After rounding to 50K: min=${minPrice}, max=${maxPrice}`);
+  console.log(`Final price range: $${minPrice}K - $${maxPrice}K`);
+
+  return { min: minPrice, max: maxPrice };
+}
+
+/**
  * Setup Price Slider
+ * @param {Array} houses - Array of houses for calculating range
  * @param {Function} applyFiltersCallback - Callback to apply filters
  */
-export function setupPriceSlider(applyFiltersCallback) {
+export function setupPriceSlider(houses, applyFiltersCallback) {
   const minSlider = document.getElementById('price-min');
   const maxSlider = document.getElementById('price-max');
   const selectedRange = document.getElementById('selected-range');
   const fill = document.getElementById('price-range-fill');
 
-  function updateSlider() {
+  // Calculate dynamic price range
+  const priceRange = calculatePriceRange(houses);
+  const rangeMin = priceRange.min;
+  const rangeMax = priceRange.max;
+
+  // Calculate appropriate step size (50K steps)
+  const step = 50;
+
+  // Update slider attributes
+  minSlider.setAttribute('min', rangeMin);
+  minSlider.setAttribute('max', rangeMax);
+  minSlider.setAttribute('step', step);
+  minSlider.value = rangeMin;
+
+  maxSlider.setAttribute('min', rangeMin);
+  maxSlider.setAttribute('max', rangeMax);
+  maxSlider.setAttribute('step', step);
+  maxSlider.value = rangeMax;
+
+  console.log(`Setting slider range: ${rangeMin} - ${rangeMax}, step: ${step}`);
+  console.log(`Slider values after set: min=${minSlider.value}, max=${maxSlider.value}`);
+
+  // Update filter state defaults and store as default range
+  setDefaultPriceRange(rangeMin, rangeMax);
+  console.log(`Default price range set to: ${rangeMin} - ${rangeMax}`);
+
+  // Update labels in HTML
+  const labels = document.querySelectorAll('.flex.justify-between.text-sm.font-medium.text-gray-700.mb-3 span');
+  if (labels.length >= 2) {
+    labels[0].textContent = formatPrice(rangeMin);
+    labels[1].textContent = formatPrice(rangeMax);
+  }
+
+  function updateSlider(triggerFilter = true) {
     let min = parseInt(minSlider.value);
     let max = parseInt(maxSlider.value);
 
@@ -148,19 +234,25 @@ export function setupPriceSlider(applyFiltersCallback) {
     filterState.priceMin = min;
     filterState.priceMax = max;
 
-    selectedRange.textContent = `$${formatPrice(min)} - $${formatPrice(max)}`;
+    const formattedMin = formatPrice(min);
+    const formattedMax = formatPrice(max);
+    console.log(`updateSlider: min=${min} -> ${formattedMin}, max=${max} -> ${formattedMax}`);
 
-    const minPercent = ((min - 200) / (6000 - 200)) * 100;
-    const maxPercent = ((max - 200) / (6000 - 200)) * 100;
+    selectedRange.textContent = `${formattedMin} - ${formattedMax}`;
+
+    const minPercent = ((min - rangeMin) / (rangeMax - rangeMin)) * 100;
+    const maxPercent = ((max - rangeMin) / (rangeMax - rangeMin)) * 100;
     fill.style.left = `${minPercent}%`;
     fill.style.width = `${maxPercent - minPercent}%`;
 
-    applyFiltersCallback();
+    if (triggerFilter) {
+      applyFiltersCallback();
+    }
   }
 
-  minSlider.addEventListener('input', updateSlider);
-  maxSlider.addEventListener('input', updateSlider);
-  updateSlider(); // Initial setup
+  minSlider.addEventListener('input', () => updateSlider(true));
+  maxSlider.addEventListener('input', () => updateSlider(true));
+  updateSlider(false); // Initial setup - don't trigger filter
 }
 
 /**
@@ -273,10 +365,10 @@ export function setupCommunityFeatures(applyFiltersCallback) {
  */
 export function setupClearAll(applyFiltersCallback) {
   document.getElementById('clear-all-filters').addEventListener('click', () => {
-    // Reset state
+    // Reset state to defaults
     filterState.search = '';
-    filterState.priceMin = 200;
-    filterState.priceMax = 6000;
+    filterState.priceMin = defaultPriceRange.min;
+    filterState.priceMax = defaultPriceRange.max;
     filterState.homeTypes = [];
     filterState.amenities = [];
     filterState.bedrooms = [];
@@ -287,8 +379,8 @@ export function setupClearAll(applyFiltersCallback) {
     // Reset UI
     document.getElementById('search-input').value = '';
     document.getElementById('clear-search').classList.add('hidden');
-    document.getElementById('price-min').value = 200;
-    document.getElementById('price-max').value = 6000;
+    document.getElementById('price-min').value = defaultPriceRange.min;
+    document.getElementById('price-max').value = defaultPriceRange.max;
     document.querySelectorAll('#home-types-container button').forEach(btn => {
       btn.classList.remove('bg-[#676ACE]', 'text-white', 'border-[#676ACE]');
       btn.classList.add('border-gray-200');
@@ -323,6 +415,16 @@ export function setupClearAll(applyFiltersCallback) {
  * @param {Function} updateFilterUICallback - Callback to update filter UI
  */
 export function applyFilters(map, geojson, getSelectedId, setSelectedId, closeDetails, updateFilterUICallback) {
+  console.log('🔍 applyFilters called', {
+    priceMin: filterState.priceMin,
+    priceMax: filterState.priceMax,
+    defaultMin: defaultPriceRange.min,
+    defaultMax: defaultPriceRange.max,
+    homeTypes: filterState.homeTypes,
+    bedrooms: filterState.bedrooms,
+    forSale: filterState.forSale
+  });
+
   // Clear selected polygon and close details panel when filtering
   if (getSelectedId() !== null) {
     map.setFeatureState(
@@ -337,14 +439,18 @@ export function applyFilters(map, geojson, getSelectedId, setSelectedId, closeDe
   const allHouses = getHousesForSale();
 
   // Step 1: Check if we have house-based filters active
+  const hasPriceFilter = filterState.priceMin !== defaultPriceRange.min || filterState.priceMax !== defaultPriceRange.max;
   const hasHouseFilters = filterState.homeTypes.length > 0 ||
                           filterState.bedrooms.length > 0 ||
-                          filterState.forSale !== 'all';
+                          filterState.forSale !== 'all' ||
+                          hasPriceFilter;
 
   let matchingVillages = null;
 
   // Step 2: If house filters are active, filter houses and get matching villages
   if (hasHouseFilters && allHouses.length > 0) {
+    let debugCount = 0; // For logging first few houses
+
     const filteredHouses = allHouses.filter(house => {
       let matches = true;
 
@@ -363,6 +469,28 @@ export function applyFilters(map, geojson, getSelectedId, setSelectedId, closeDe
           return false;
         });
         matches = matches && matchesBedrooms;
+      }
+
+      // Price filter - use listingPricePure (already a number)
+      if (hasPriceFilter) {
+        // Use listingPricePure if available, otherwise parse listingPrice string
+        const priceRaw = house.listingPricePure || parseFloat((house.listingPrice || '').replace(/[$,]/g, ''));
+        const price = priceRaw / 1000; // Convert to thousands
+
+        // If price filter is active, house must have valid price and be in range
+        if (!price || price <= 0) {
+          matches = false; // Reject houses without valid prices when filtering by price
+        } else {
+          const inRange = price >= filterState.priceMin && price <= filterState.priceMax;
+
+          // Debug: Log first few houses when price filter is active
+          if (debugCount < 5) {
+            console.log(`House price check: $${priceRaw.toLocaleString()} (${price}K) - Range: ${filterState.priceMin}K-${filterState.priceMax}K - InRange: ${inRange}`);
+            debugCount++;
+          }
+
+          matches = matches && inRange;
+        }
       }
 
       // For Sale status filter
@@ -548,7 +676,7 @@ export function setupFilters(geojson, houses, applyFiltersCallback) {
   populateHomeTypes(houses, applyFiltersCallback);
   populateAmenities(geojson, applyFiltersCallback);
   populateBedrooms(applyFiltersCallback);
-  setupPriceSlider(applyFiltersCallback);
+  setupPriceSlider(houses, applyFiltersCallback);
   setupSearch(applyFiltersCallback);
   setupAmenitiesDropdown();
   setupForSaleFilter(applyFiltersCallback);

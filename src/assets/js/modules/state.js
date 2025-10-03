@@ -18,6 +18,23 @@ export const filterState = {
 };
 
 /**
+ * Default price range (calculated from houses data)
+ * Used to check if price filter is active
+ */
+export let defaultPriceRange = { min: 200, max: 6000 };
+
+/**
+ * Set default price range
+ * @param {number} min - Minimum price in thousands
+ * @param {number} max - Maximum price in thousands
+ */
+export function setDefaultPriceRange(min, max) {
+  defaultPriceRange = { min, max };
+  filterState.priceMin = min;
+  filterState.priceMax = max;
+}
+
+/**
  * Selected neighborhood tracking
  */
 let selectedNeighborhoodId = null;

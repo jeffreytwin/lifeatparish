@@ -9,9 +9,9 @@
  */
 export function formatPrice(value) {
   if (value >= 1000) {
-    return `${(value / 1000).toFixed(1).replace('.0', '')}M`;
+    return `$${(value / 1000).toFixed(1).replace('.0', '')}M`;
   }
-  return `${value}K`;
+  return `$${value}K`;
 }
 
 /**
