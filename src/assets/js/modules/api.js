@@ -27,16 +27,36 @@ export async function fetchNeighborhoods() {
 }
 
 /**
- * Fetch houses for sale from Wix
- * @returns {Promise<Array>} Array of house items
+ * Fetch houses for sale from Wix with pagination
+ * Fetches all pages to get complete dataset
+ * @returns {Promise<Array>} Array of all house items
  */
 export async function fetchHousesForSale() {
-  const result = await wixClient.items
+  let allHouses = [];
+  let pageCount = 0;
+
+  console.log('Fetching houses for sale with pagination...');
+
+  // Get first page
+  let result = await wixClient.items
     .query('HousesforSale')
     .find();
 
-  console.log('Houses for sale', { result });
-  return result.items;
+  pageCount++;
+  console.log(`Page ${pageCount}: Fetched ${result.items.length} houses`);
+  allHouses = allHouses.concat(result.items);
+
+  // Fetch remaining pages
+  while (result.hasNext()) {
+    result = await result.next();
+    pageCount++;
+    console.log(`Page ${pageCount}: Fetched ${result.items.length} houses`);
+    allHouses = allHouses.concat(result.items);
+  }
+
+  console.log(`✓ Fetched all houses: ${allHouses.length} total (${pageCount} pages)`);
+
+  return allHouses;
 }
 
 /**

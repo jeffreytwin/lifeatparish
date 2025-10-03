@@ -19,16 +19,31 @@ export function createImageCarousel(images, altText = 'Image') {
   }
 
   let currentIndex = 0;
+  let isTransitioning = false;
 
   // Create container
   const container = document.createElement('div');
   container.className = 'relative w-full h-48 overflow-hidden rounded-t-lg group';
 
+  // Create shimmer loader
+  const loader = document.createElement('div');
+  loader.className = 'absolute inset-0 bg-gray-200 shimmer-loader';
+  loader.innerHTML = '<div class="shimmer"></div>';
+  container.appendChild(loader);
+
   // Create image element
   const img = document.createElement('img');
   img.src = images[0];
   img.alt = altText;
-  img.className = 'w-full h-full object-cover';
+  img.className = 'w-full h-full object-cover transition-opacity duration-300 opacity-0';
+
+  // Show image when loaded, hide loader
+  img.onload = () => {
+    img.classList.remove('opacity-0');
+    img.classList.add('opacity-100');
+    loader.style.display = 'none';
+  };
+
   container.appendChild(img);
 
   // Only add navigation if there are multiple images
@@ -58,20 +73,46 @@ export function createImageCarousel(images, altText = 'Image') {
     counter.className = 'absolute bottom-2 right-2 bg-black/60 text-white text-xs px-2 py-1 rounded';
     counter.textContent = `1 / ${images.length}`;
 
+    // Function to change image with animation
+    const changeImage = (newIndex) => {
+      if (isTransitioning) return;
+      isTransitioning = true;
+
+      // Show loader
+      loader.style.display = 'block';
+
+      // Fade out current image
+      img.classList.remove('opacity-100');
+      img.classList.add('opacity-0');
+
+      setTimeout(() => {
+        // Change image source
+        img.src = images[newIndex];
+        currentIndex = newIndex;
+        counter.textContent = `${currentIndex + 1} / ${images.length}`;
+
+        // Wait for new image to load
+        img.onload = () => {
+          loader.style.display = 'none';
+          img.classList.remove('opacity-0');
+          img.classList.add('opacity-100');
+          isTransitioning = false;
+        };
+      }, 300);
+    };
+
     // Left button click handler
     leftBtn.addEventListener('click', (e) => {
       e.stopPropagation(); // Prevent card click
-      currentIndex = (currentIndex - 1 + images.length) % images.length;
-      img.src = images[currentIndex];
-      counter.textContent = `${currentIndex + 1} / ${images.length}`;
+      const newIndex = (currentIndex - 1 + images.length) % images.length;
+      changeImage(newIndex);
     });
 
     // Right button click handler
     rightBtn.addEventListener('click', (e) => {
       e.stopPropagation(); // Prevent card click
-      currentIndex = (currentIndex + 1) % images.length;
-      img.src = images[currentIndex];
-      counter.textContent = `${currentIndex + 1} / ${images.length}`;
+      const newIndex = (currentIndex + 1) % images.length;
+      changeImage(newIndex);
     });
 
     container.appendChild(leftBtn);

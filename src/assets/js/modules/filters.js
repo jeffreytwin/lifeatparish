@@ -9,13 +9,20 @@ import mapboxgl from 'mapbox-gl';
 // ========== POPULATION FUNCTIONS ==========
 
 /**
- * Populate Home Types from GeoJSON
+ * Populate Home Types dynamically from houses data
+ * @param {Array} houses - Array of houses from sale
  * @param {Function} applyFiltersCallback - Callback to apply filters
  */
-export function populateHomeTypes(applyFiltersCallback) {
-  // Mock data for Phase 2A - will be replaced with dynamic data in Phase 2B
-  const types = ['Single Family', 'Townhome', 'Villa', 'Condominium'];
+export function populateHomeTypes(houses, applyFiltersCallback) {
+  // Extract unique home types from actual houses data
+  const homeTypesSet = new Set();
+  houses.forEach(house => {
+    if (house.homeType) {
+      homeTypesSet.add(house.homeType);
+    }
+  });
 
+  const types = Array.from(homeTypesSet).sort();
   const container = document.getElementById('home-types-container');
 
   types.forEach(type => {
@@ -493,11 +500,12 @@ export function updateResultsCounter(matchedCount, geojson) {
 /**
  * Setup all filters
  * @param {Object} geojson - The GeoJSON data
+ * @param {Array} houses - Array of houses for sale
  * @param {Function} applyFiltersCallback - Callback to apply filters
  */
-export function setupFilters(geojson, applyFiltersCallback) {
+export function setupFilters(geojson, houses, applyFiltersCallback) {
   // Initialize UI components
-  populateHomeTypes(applyFiltersCallback);
+  populateHomeTypes(houses, applyFiltersCallback);
   populateAmenities(geojson, applyFiltersCallback);
   populateBedrooms(applyFiltersCallback);
   setupPriceSlider(applyFiltersCallback);

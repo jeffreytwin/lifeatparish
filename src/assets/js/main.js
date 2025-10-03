@@ -4,7 +4,7 @@ import { fetchFloorPlans, fetchHousesForSale } from './modules/api.js';
 import { closeDetailsPanel, initDetailsPanel, showNeighborhoodDetails } from './modules/details-panel.js';
 import { applyFilters as applyFiltersModule, setupFilters, updateFilterUI } from './modules/filters.js';
 import { createPopup, fetchNeighborhoodGeojson, fitMapToAllNeighborhoods, loadNeighborhoodsGeojson, setupMapInteractions } from './modules/map.js';
-import { getSelectedNeighborhoodId, setHousesForSale, setSelectedNeighborhoodId } from './modules/state.js';
+import { getSelectedNeighborhoodId, getHousesForSale, setHousesForSale, setSelectedNeighborhoodId } from './modules/state.js';
 
 const neighborhoodGeojson = await fetchNeighborhoodGeojson()
 
@@ -26,6 +26,11 @@ fetchFloorPlans();
 fetchHousesForSale().then(houses => {
   setHousesForSale(houses || []);
   console.log(`Loaded ${houses?.length || 0} houses for sale`);
+
+  // Setup filters once houses are loaded
+  if (map.loaded()) {
+    initializeFilters();
+  }
 }).catch(error => {
   console.error('Error fetching houses:', error);
   setHousesForSale([]);
@@ -51,14 +56,24 @@ map.on('load', () => {
   // Setup details panel
   initDetailsPanel(map);
 
+  // Initialize filters if houses are already loaded
+  const houses = getHousesForSale();
+  if (houses.length > 0) {
+    initializeFilters();
+  }
+
+  // Fit map to all neighborhoods on initial load
+  fitMapToAllNeighborhoods(map, neighborhoodGeojson);
+});
+
+function initializeFilters() {
+  const houses = getHousesForSale();
+
   // Wrapper for applyFilters that provides all necessary dependencies
   const applyFiltersWrapper = () => {
     applyFiltersModule(map, neighborhoodGeojson, getSelectedNeighborhoodId, setSelectedNeighborhoodId, closeDetailsPanel, updateFilterUI);
   };
 
-  // Setup filters
-  setupFilters(neighborhoodGeojson, applyFiltersWrapper);
-
-  // Fit map to all neighborhoods on initial load
-  fitMapToAllNeighborhoods(map, neighborhoodGeojson);
-});
+  // Setup filters with houses data
+  setupFilters(neighborhoodGeojson, houses, applyFiltersWrapper);
+}
