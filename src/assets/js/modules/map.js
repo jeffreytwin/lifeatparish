@@ -3,6 +3,7 @@
  */
 
 import mapboxgl from 'mapbox-gl';
+import { getNeighborhoodsData } from './state.js';
 
 /**
  * Fetch neighborhood GeoJSON data
@@ -12,6 +13,54 @@ export async function fetchNeighborhoodGeojson() {
   const response = await fetch('neighborhoods.geojson');
   const neighborhoodData = await response.json();
   return neighborhoodData;
+}
+
+/**
+ * Normalize neighborhood name for matching
+ * @param {string} name - Neighborhood name
+ * @returns {string} Normalized name
+ */
+function normalizeNeighborhoodName(name) {
+  return name.toLowerCase()
+    .replace(/\s+/g, '') // Remove spaces
+    .replace(/[^a-z0-9]/g, ''); // Remove special characters
+}
+
+/**
+ * Find neighborhood data by name
+ * @param {string} neighborhoodName - Name from GeoJSON
+ * @returns {Object|null} Neighborhood data object or null
+ */
+function findNeighborhoodData(neighborhoodName) {
+  const neighborhoods = getNeighborhoodsData();
+  const normalizedSearch = normalizeNeighborhoodName(neighborhoodName);
+
+  return neighborhoods.find(n => {
+    // Try matching against villageTitle (remove "Homes for Sale in " prefix)
+    const title = (n.villageTitle || '').replace(/^Homes for Sale in /i, '');
+    const normalizedTitle = normalizeNeighborhoodName(title);
+    return normalizedTitle === normalizedSearch;
+  }) || null;
+}
+
+/**
+ * Convert Wix image URL to usable format
+ * @param {string} wixUrl - Wix image URL
+ * @returns {string} Converted image URL
+ */
+function convertWixImageUrl(wixUrl) {
+  if (!wixUrl) return null;
+
+  if (wixUrl.startsWith('wix:image://')) {
+    // Format: wix:image://v1/d0be81_XXXXX~mv2.png/filename.png#originWidth=1909&originHeight=1070
+    const match = wixUrl.match(/wix:image:\/\/v1\/(.*?)\/(.*?)#/);
+    if (match) {
+      const imageId = match[1];
+      return `https://static.wixstatic.com/media/${imageId}`;
+    }
+  }
+
+  return wixUrl; // Return as-is if not Wix format
 }
 
 /**
@@ -174,6 +223,7 @@ export function unfadeAllFeatures(map) {
  */
 export function setupMapInteractions(map, popup, getSelectedId, setSelectedId, showDetails, closeDetails) {
   let hoveredNeighborhoodId = null;
+  const imageCache = new Map(); // Cache for preloaded images
 
   // Change cursor to pointer on hover
   map.on('mouseenter', 'neighborhood-fills', () => {
@@ -203,36 +253,98 @@ export function setupMapInteractions(map, popup, getSelectedId, setSelectedId, s
       const properties = e.features[0].properties;
       const coordinates = e.lngLat;
 
+      // Determine color based on new_construction status
+      const isNewConstruction = properties.new_construction === true;
+      const themeColor = isNewConstruction ? '#676ACE' : '#4AC2A9';
+
+      // Find matching neighborhood data
+      const neighborhoodData = findNeighborhoodData(properties.neighborhood);
+      const imageUrl = neighborhoodData ? convertWixImageUrl(neighborhoodData.topBackgroundImage) : null;
+
       // Build popup HTML with enhanced styling
       const priceText = properties.price_range ? properties.price_range : '';
-      const homeInfo = properties.new_construction
-        ? 'New Construction'
-        : (properties.homeType || '');
+      const constructionStatus = isNewConstruction ? 'New Construction' : '';
 
-      const html = `
-        <div class="px-4 py-3 min-w-[200px]">
-          <h3 class="font-bold text-lg text-gray-900 mb-2 border-b-2 border-[#676ACE] pb-2">${properties.neighborhood || 'Neighborhood'}</h3>
-          <div class="space-y-2">
-            ${priceText ? `
-              <div class="flex items-center gap-2">
-                <div class="w-2 h-2 rounded-full bg-[#676ACE]"></div>
-                <span class="text-sm font-semibold text-[#676ACE]">${priceText}</span>
-              </div>
-            ` : ''}
-            ${homeInfo ? `
-              <div class="flex items-center gap-2">
-                <div class="w-2 h-2 rounded-full bg-[#2C9E36]"></div>
-                <span class="text-sm font-medium text-gray-700">${homeInfo}</span>
-              </div>
-            ` : ''}
-          </div>
-          <div class="mt-3 pt-2 border-t border-gray-200">
-            <p class="text-xs text-gray-500 italic">Click to view details</p>
-          </div>
+      // Build the popup content
+      const popupContainer = document.createElement('div');
+      popupContainer.style.width = '280px';
+
+      // Add image container with shimmer if image exists
+      if (imageUrl) {
+        const imageContainer = document.createElement('div');
+        imageContainer.style.cssText = 'position: relative; width: 280px; height: 160px; overflow: hidden;';
+
+        // Check if image is already cached
+        if (imageCache.has(imageUrl)) {
+          // Use cached image - no shimmer needed
+          const cachedImg = imageCache.get(imageUrl).cloneNode();
+          cachedImg.style.cssText = 'width: 280px; height: 160px; object-fit: cover; display: block;';
+          imageContainer.appendChild(cachedImg);
+        } else {
+          // Show shimmer while loading
+          imageContainer.style.cssText += ' background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%); background-size: 200% 100%;';
+          imageContainer.style.animation = 'shimmer 1.5s infinite';
+
+          const img = document.createElement('img');
+          img.src = imageUrl;
+          img.alt = properties.neighborhood;
+          img.style.cssText = 'width: 280px; height: 160px; object-fit: cover; display: block; opacity: 0; transition: opacity 0.3s;';
+
+          img.onload = () => {
+            img.style.opacity = '1';
+            imageContainer.style.background = 'none';
+            imageContainer.style.animation = 'none';
+            // Cache the loaded image
+            imageCache.set(imageUrl, img.cloneNode());
+          };
+
+          img.onerror = () => {
+            imageContainer.remove();
+          };
+
+          imageContainer.appendChild(img);
+        }
+
+        popupContainer.appendChild(imageContainer);
+      }
+
+      // Add content section
+      const contentDiv = document.createElement('div');
+      contentDiv.style.cssText = 'padding: 1rem; width: 280px; box-sizing: border-box;';
+      contentDiv.innerHTML = `
+        <h3 style="font-weight: 700; font-size: 1.125rem; color: #111827; margin-bottom: 0.5rem; border-bottom: 2px solid ${themeColor}; padding-bottom: 0.5rem;">${properties.neighborhood || 'Neighborhood'}</h3>
+        <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+          ${priceText ? `
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+              <div style="width: 0.5rem; height: 0.5rem; border-radius: 9999px; background-color: ${themeColor};"></div>
+              <span style="font-size: 0.875rem; font-weight: 600; color: ${themeColor};">${priceText}</span>
+            </div>
+          ` : ''}
+          ${constructionStatus ? `
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+              <div style="width: 0.5rem; height: 0.5rem; border-radius: 9999px; background-color: #2C9E36;"></div>
+              <span style="font-size: 0.875rem; font-weight: 500; color: #374151;">${constructionStatus}</span>
+            </div>
+          ` : ''}
+        </div>
+        <div style="margin-top: 0.75rem; padding-top: 0.5rem; border-top: 1px solid #e5e7eb;">
+          <p style="font-size: 0.75rem; color: #6b7280; font-style: italic;">Click to view details</p>
         </div>
       `;
 
-      popup.setLngLat(coordinates).setHTML(html).addTo(map);
+      popupContainer.appendChild(contentDiv);
+
+      // Add shimmer animation style
+      const style = document.createElement('style');
+      style.textContent = `
+        @keyframes shimmer {
+          0% { background-position: -200% 0; }
+          100% { background-position: 200% 0; }
+        }
+      `;
+      document.head.appendChild(style);
+
+      popup.setLngLat(coordinates).setDOMContent(popupContainer).addTo(map);
     }
   });
 

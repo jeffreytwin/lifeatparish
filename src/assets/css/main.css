@@ -11,6 +11,19 @@
     position: relative;
 }
 
+/* Mapbox Popup Fixes */
+.mapboxgl-popup-content {
+    padding: 0 !important;
+    max-width: none !important;
+    overflow: hidden !important;
+    border-radius: 8px;
+}
+
+.mapboxgl-popup-content img {
+    display: block;
+    max-width: 100%;
+}
+
 /* Shimmer loading animation */
 .shimmer-loader {
     position: relative;

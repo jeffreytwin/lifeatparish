@@ -74,3 +74,24 @@ export function getHousesForSale() {
 export function setHousesForSale(houses) {
   housesForSale = houses;
 }
+
+/**
+ * Neighborhoods data storage (from Wix)
+ */
+let neighborhoodsData = [];
+
+/**
+ * Get all neighborhoods data
+ * @returns {Array} Array of neighborhood objects
+ */
+export function getNeighborhoodsData() {
+  return neighborhoodsData;
+}
+
+/**
+ * Set neighborhoods data
+ * @param {Array} neighborhoods - Array of neighborhood objects
+ */
+export function setNeighborhoodsData(neighborhoods) {
+  neighborhoodsData = neighborhoods;
+}

@@ -4,7 +4,7 @@ import { fetchHousesForSale, fetchNeighborhoods } from './modules/api.js';
 import { closeDetailsPanel, initDetailsPanel, showNeighborhoodDetails } from './modules/details-panel.js';
 import { applyFilters as applyFiltersModule, setupFilters, updateFilterUI } from './modules/filters.js';
 import { createPopup, fetchNeighborhoodGeojson, fitMapToAllNeighborhoods, loadNeighborhoodsGeojson, setupMapInteractions } from './modules/map.js';
-import { getHousesForSale, getSelectedNeighborhoodId, setHousesForSale, setSelectedNeighborhoodId } from './modules/state.js';
+import { getHousesForSale, getSelectedNeighborhoodId, setHousesForSale, setSelectedNeighborhoodId, setNeighborhoodsData } from './modules/state.js';
 
 const neighborhoodGeojson = await fetchNeighborhoodGeojson()
 
@@ -18,7 +18,14 @@ const map = new mapboxgl.Map({
   zoom: 7
 });
 
-fetchNeighborhoods()
+// Fetch and store neighborhoods data
+fetchNeighborhoods().then(neighborhoods => {
+  setNeighborhoodsData(neighborhoods || []);
+  console.log(`Loaded ${neighborhoods?.length || 0} neighborhoods from Wix`);
+}).catch(error => {
+  console.error('Error fetching neighborhoods:', error);
+  setNeighborhoodsData([]);
+});
 
 // Fetch houses and store in state
 fetchHousesForSale().then(houses => {
