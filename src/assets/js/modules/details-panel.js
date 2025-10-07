@@ -45,6 +45,38 @@ function findNeighborhoodData(neighborhoodName) {
 }
 
 /**
+ * Map amenity tag to its corresponding image field name in neighborhood data
+ * @param {string} amenityTag - The amenity tag (e.g., "Community Pool")
+ * @returns {string} The field name for the image (e.g., "poolImage")
+ */
+function getAmenityImageField(amenityTag) {
+  const mapping = {
+    'Clubhouse': 'clubhouseImage',
+    'Community Pool': 'poolImage',
+    'Pool': 'poolImage',
+    'Fitness Center': 'gymImage',
+    'Gym': 'gymImage',
+    'Pickleball': 'pickleballImage',
+    'Bocce Ball': 'bocceBallImage',
+    'Dog Park': 'dogParkImage',
+    'Lifestyle Activities': 'lifestyleDirectorImage',
+    'Playground': 'totLotImage',
+    'Tot Lot': 'totLotImage',
+    'Walking Paths': 'walkingPathsImage',
+    'Walking Trails': 'walkingPathsImage',
+    'Trails': 'trailsImage',
+    'Tennis': 'tennisImage',
+    'Golf': 'golfImage',
+    'Gated': 'gatedImage',
+    'Gated Community': 'gatedImage',
+    'Nature Trails': 'trailsImage',
+    'Community Events': 'lifestyleDirectorImage'
+  };
+
+  return mapping[amenityTag] || null;
+}
+
+/**
  * Show neighborhood details in the side panel
  * @param {Object} neighborhood - Neighborhood properties from GeoJSON
  */
@@ -211,9 +243,26 @@ export function showNeighborhoodDetails(neighborhood) {
     amenitiesGrid.className = 'flex flex-wrap gap-2';
 
     neighborhoodData.amenitiesTags.forEach(amenity => {
+      const imageField = getAmenityImageField(amenity);
+      const imageUrl = imageField && neighborhoodData[imageField] ? convertWixImageUrl(neighborhoodData[imageField]) : null;
+
       const tag = document.createElement('div');
-      tag.style.cssText = `background: ${themeColor}; color: white; padding: 0.5rem 1rem; border-radius: 9999px; font-size: 0.875rem; font-weight: 600; box-shadow: 0 1px 3px rgba(0,0,0,0.1);`;
-      tag.textContent = amenity;
+      tag.className = 'flex items-center gap-2 px-3 py-2 rounded-full transition-all hover:shadow-md bg-white';
+
+      if (imageUrl) {
+        const icon = document.createElement('img');
+        icon.src = imageUrl;
+        icon.alt = amenity;
+        icon.className = 'w-5 h-5 object-contain';
+        tag.appendChild(icon);
+      }
+
+      const label = document.createElement('span');
+      label.className = 'text-sm font-semibold';
+      label.style.color = '#4AC2A9';
+      label.textContent = amenity;
+      tag.appendChild(label);
+
       amenitiesGrid.appendChild(tag);
     });
 
