@@ -2,8 +2,8 @@
  * Details Panel Management
  */
 
+import { convertWixImageUrl, createImageWithLoader, unfadeAllFeatures } from './map.js';
 import { defaultPriceRange, filterState, getHousesForSale, getNeighborhoodsData } from './state.js';
-import { unfadeAllFeatures, convertWixImageUrl, createImageWithLoader } from './map.js';
 
 let map = null;
 
@@ -54,7 +54,7 @@ function getAmenityImageField(amenityTag) {
     'Clubhouse': 'clubhouseImage',
     'Community Pool': 'poolImage',
     'Pool': 'poolImage',
-    'Fitness Center': 'gymImage',
+    'Fitness Center': 'fitnessCenterImage',
     'Gym': 'gymImage',
     'Pickleball': 'pickleballImage',
     'Bocce Ball': 'bocceBallImage',
@@ -111,6 +111,7 @@ export function showNeighborhoodDetails(neighborhood) {
   // Create content element for scrollable content
   const contentElement = document.createElement('div');
   contentElement.className = 'details-body';
+  contentElement.style.paddingBottom = '100px'; // Add padding for fixed button
   detailsContent.appendChild(contentElement);
 
   // === HEADER IMAGE SECTION ===
@@ -130,6 +131,16 @@ export function showNeighborhoodDetails(neighborhood) {
       'width: 100%; height: 100%;'
     );
     headerContainer.appendChild(imageWrapper);
+
+    // New Construction badge (if applicable)
+    if (isNewConstruction) {
+      const badge = document.createElement('div');
+      badge.className = 'absolute top-4 left-4 bg-green-500 text-white px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide shadow-lg flex items-center gap-1';
+      badge.innerHTML = `
+        New Construction
+      `;
+      headerContainer.appendChild(badge);
+    }
 
     // Overlay with neighborhood name
     const overlay = document.createElement('div');
@@ -198,17 +209,6 @@ export function showNeighborhoodDetails(neighborhood) {
   `;
   statsContainer.appendChild(floorPlansCount);
 
-  // New Construction badge
-  if (isNewConstruction) {
-    const newConstructionBadge = document.createElement('div');
-    newConstructionBadge.className = 'flex-1 bg-gradient-to-br from-green-500 to-green-600 rounded-lg p-4 text-center flex flex-col items-center justify-center';
-    newConstructionBadge.innerHTML = `
-      <svg style="width: 2rem; height: 2rem; color: white; margin-bottom: 0.25rem;" fill="currentColor" viewBox="0 0 640 512"><path d="M0 488V171.3c0-26.2 15.9-49.7 40.2-59.4L308.1 4.8c7.6-3.1 16.1-3.1 23.8 0L599.8 111.9c24.3 9.7 40.2 33.3 40.2 59.4V488c0 13.3-10.7 24-24 24H568c-13.3 0-24-10.7-24-24V224c0-17.7-14.3-32-32-32H128c-17.7 0-32 14.3-32 32V488c0 13.3-10.7 24-24 24H24c-13.3 0-24-10.7-24-24z"/></svg>
-      <div style="font-size: 0.75rem; color: white; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">New Construction</div>
-    `;
-    statsContainer.appendChild(newConstructionBadge);
-  }
-
   contentElement.appendChild(statsContainer);
 
   // === SHORT DESCRIPTION SECTION ===
@@ -240,14 +240,14 @@ export function showNeighborhoodDetails(neighborhood) {
     amenitiesSection.appendChild(amenitiesTitle);
 
     const amenitiesGrid = document.createElement('div');
-    amenitiesGrid.className = 'flex flex-wrap gap-2';
+    amenitiesGrid.className = 'grid grid-cols-2 gap-2';
 
     neighborhoodData.amenitiesTags.forEach(amenity => {
       const imageField = getAmenityImageField(amenity);
       const imageUrl = imageField && neighborhoodData[imageField] ? convertWixImageUrl(neighborhoodData[imageField]) : null;
 
       const tag = document.createElement('div');
-      tag.className = 'flex items-center gap-2 px-3 py-2 rounded-full transition-all hover:shadow-md bg-white';
+      tag.className = 'flex items-center gap-2 px-3 py-2 rounded-full bg-white';
 
       if (imageUrl) {
         const icon = document.createElement('img');
@@ -270,13 +270,20 @@ export function showNeighborhoodDetails(neighborhood) {
     contentElement.appendChild(amenitiesSection);
   }
 
-  // === EXPLORE BUTTON ===
-  if (neighborhoodData && neighborhoodData['link-copy-of-neighborhood-title']) {
+  // === EXPLORE BUTTON (Fixed at bottom of panel) ===
+  if (neighborhoodData && neighborhoodData['link-villages-title']) {
+    // Remove any existing button
+    const existingButton = panel.querySelector('.explore-button-container');
+    if (existingButton) {
+      existingButton.remove();
+    }
+
     const buttonContainer = document.createElement('div');
-    buttonContainer.className = 'mb-6';
+    buttonContainer.className = 'explore-button-container absolute bottom-0 left-0 right-0 p-4 bg-white border-t-2 border-gray-200';
+    buttonContainer.style.cssText = 'box-shadow: 0 -4px 6px -1px rgba(0, 0, 0, 0.1);';
 
     const exploreButton = document.createElement('a');
-    exploreButton.href = neighborhoodData['link-copy-of-neighborhood-title'];
+    exploreButton.href = `https://www.lifeatparrish.com${neighborhoodData['link-villages-title']}`;
     exploreButton.target = '_blank';
     exploreButton.rel = 'noopener noreferrer';
     exploreButton.className = 'block w-full text-center py-3 px-6 rounded-lg font-bold text-white transition-all duration-200 shadow-lg hover:shadow-xl';
@@ -288,7 +295,7 @@ export function showNeighborhoodDetails(neighborhood) {
       </svg>
     `;
     buttonContainer.appendChild(exploreButton);
-    contentElement.appendChild(buttonContainer);
+    panel.appendChild(buttonContainer);
   }
 
   // Show panel with animation
