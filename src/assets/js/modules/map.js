@@ -48,7 +48,7 @@ function findNeighborhoodData(neighborhoodName) {
  * @param {string} wixUrl - Wix image URL
  * @returns {string} Converted image URL
  */
-function convertWixImageUrl(wixUrl) {
+export function convertWixImageUrl(wixUrl) {
   if (!wixUrl) return null;
 
   if (wixUrl.startsWith('wix:image://')) {
@@ -61,6 +61,61 @@ function convertWixImageUrl(wixUrl) {
   }
 
   return wixUrl; // Return as-is if not Wix format
+}
+
+/**
+ * Create an image element with shimmer loading effect
+ * @param {string} imageUrl - Image URL to load
+ * @param {string} alt - Alt text for the image
+ * @param {string} imageCss - CSS styles for the image element itself
+ * @param {string} containerCss - CSS styles for the container div (optional)
+ * @param {Map} imageCache - Optional image cache
+ * @returns {Object} Object with container element and promise that resolves when loaded
+ */
+export function createImageWithLoader(imageUrl, alt, imageCss = '', containerCss = '', imageCache = null) {
+  const imageContainer = document.createElement('div');
+  // Set base container styles that ensure proper shimmer display
+  const baseContainerCss = 'position: relative; overflow: hidden; background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%); background-size: 200% 100%;';
+  imageContainer.style.cssText = containerCss ? `${baseContainerCss} ${containerCss}` : baseContainerCss;
+  imageContainer.style.animation = 'shimmer 1.5s infinite';
+
+  // Check if image is already cached
+  if (imageCache && imageCache.has(imageUrl)) {
+    const cachedImg = imageCache.get(imageUrl).cloneNode();
+    cachedImg.style.cssText = imageCss;
+    imageContainer.appendChild(cachedImg);
+    // Remove shimmer for cached images
+    imageContainer.style.background = 'none';
+    imageContainer.style.animation = 'none';
+    return { container: imageContainer, promise: Promise.resolve() };
+  }
+
+  const img = document.createElement('img');
+  img.src = imageUrl;
+  img.alt = alt;
+  img.style.cssText = `${imageCss}; opacity: 0; transition: opacity 0.3s;`;
+
+  const loadPromise = new Promise((resolve, reject) => {
+    img.onload = () => {
+      img.style.opacity = '1';
+      imageContainer.style.background = 'none';
+      imageContainer.style.animation = 'none';
+      // Cache the loaded image
+      if (imageCache) {
+        imageCache.set(imageUrl, img.cloneNode());
+      }
+      resolve();
+    };
+
+    img.onerror = () => {
+      imageContainer.remove();
+      reject(new Error('Failed to load image'));
+    };
+  });
+
+  imageContainer.appendChild(img);
+
+  return { container: imageContainer, promise: loadPromise };
 }
 
 /**
@@ -271,41 +326,14 @@ export function setupMapInteractions(map, popup, getSelectedId, setSelectedId, s
 
       // Add image container with shimmer if image exists
       if (imageUrl) {
-        const imageContainer = document.createElement('div');
-        imageContainer.style.cssText = 'position: relative; width: 280px; height: 160px; overflow: hidden;';
-
-        // Check if image is already cached
-        if (imageCache.has(imageUrl)) {
-          // Use cached image - no shimmer needed
-          const cachedImg = imageCache.get(imageUrl).cloneNode();
-          cachedImg.style.cssText = 'width: 280px; height: 160px; object-fit: cover; display: block;';
-          imageContainer.appendChild(cachedImg);
-        } else {
-          // Show shimmer while loading
-          imageContainer.style.cssText += ' background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%); background-size: 200% 100%;';
-          imageContainer.style.animation = 'shimmer 1.5s infinite';
-
-          const img = document.createElement('img');
-          img.src = imageUrl;
-          img.alt = properties.neighborhood;
-          img.style.cssText = 'width: 280px; height: 160px; object-fit: cover; display: block; opacity: 0; transition: opacity 0.3s;';
-
-          img.onload = () => {
-            img.style.opacity = '1';
-            imageContainer.style.background = 'none';
-            imageContainer.style.animation = 'none';
-            // Cache the loaded image
-            imageCache.set(imageUrl, img.cloneNode());
-          };
-
-          img.onerror = () => {
-            imageContainer.remove();
-          };
-
-          imageContainer.appendChild(img);
-        }
-
-        popupContainer.appendChild(imageContainer);
+        const { container } = createImageWithLoader(
+          imageUrl,
+          properties.neighborhood,
+          'width: 280px; height: 160px; object-fit: cover; display: block;',
+          'width: 280px; height: 160px;',
+          imageCache
+        );
+        popupContainer.appendChild(container);
       }
 
       // Add content section
