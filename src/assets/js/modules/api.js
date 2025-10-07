@@ -67,3 +67,16 @@ export async function fetchHousesForSale() {
   return allHouses;
 }
 
+/**
+ * Fetch neighborhoods data from Wix
+ * @returns {Promise<Array>} Array of neighborhood items
+ */
+export async function fetchNeighborhoods() {
+  const result = await wixClient.items
+    .query('HousesforSale-DynamicPages')
+    .limit(300)
+    .find();
+
+  console.log('items', result);
+  return result.items;
+}

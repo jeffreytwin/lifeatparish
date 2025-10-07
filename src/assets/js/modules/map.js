@@ -62,33 +62,50 @@ export function loadNeighborhoodsGeojson(map, geojson) {
     generateId: true // Generate IDs for features automatically
   });
 
-  // Style the polygons
+  // Style the polygons - 2 colors based on new_construction
   map.addLayer({
     id: 'neighborhood-fills',
     type: 'fill',
     source: 'neighborhoods',
     paint: {
-      'fill-color': ['get', 'fill'],
+      'fill-color': [
+        'case',
+        ['==', ['get', 'new_construction'], true],
+        '#676ACE', // New construction - purple
+        '#4AC2A9'  // Not new construction - teal (default for false or null)
+      ],
       'fill-opacity': [
         'case',
         ['boolean', ['feature-state', 'selected'], false],
         0.8, // Keep bright when selected
+        ['boolean', ['feature-state', 'faded'], false],
+        0.15, // Fade when another neighborhood is selected
         ['boolean', ['feature-state', 'hover'], false],
         0.8, // Brighten on hover
-        ['get', 'fill-opacity'] // Default opacity
+        0.5 // Default opacity
       ],
     }
   });
 
-  // Add border/stroke layer
+  // Add border/stroke layer - matching the fill colors
   map.addLayer({
     id: 'neighborhood-borders',
     type: 'line',
     source: 'neighborhoods',
     paint: {
-      'line-color': ['get', 'stroke'],
-      'line-width': ['get', 'stroke-width'],
-      'line-opacity': ['get', 'stroke-opacity']
+      'line-color': [
+        'case',
+        ['==', ['get', 'new_construction'], true],
+        '#676ACE', // New construction - purple
+        '#4AC2A9'  // Not new construction - teal (default for false or null)
+      ],
+      'line-width': 2,
+      'line-opacity': [
+        'case',
+        ['boolean', ['feature-state', 'faded'], false],
+        0.2, // Fade border when another neighborhood is selected
+        1 // Default opacity
+      ]
     }
   });
 
@@ -112,6 +129,37 @@ export function loadNeighborhoodsGeojson(map, geojson) {
         0
       ]
     }
+  });
+}
+
+/**
+ * Helper function to fade all features except the selected one
+ * @param {mapboxgl.Map} map - The map instance
+ * @param {number} selectedId - The ID of the selected feature
+ */
+function fadeUnselectedFeatures(map, selectedId) {
+  const features = map.querySourceFeatures('neighborhoods');
+  features.forEach(feature => {
+    if (feature.id !== selectedId) {
+      map.setFeatureState(
+        { source: 'neighborhoods', id: feature.id },
+        { faded: true }
+      );
+    }
+  });
+}
+
+/**
+ * Helper function to unfade all features
+ * @param {mapboxgl.Map} map - The map instance
+ */
+export function unfadeAllFeatures(map) {
+  const features = map.querySourceFeatures('neighborhoods');
+  features.forEach(feature => {
+    map.setFeatureState(
+      { source: 'neighborhoods', id: feature.id },
+      { faded: false }
+    );
   });
 }
 
@@ -221,6 +269,9 @@ export function setupMapInteractions(map, popup, getSelectedId, setSelectedId, s
         { selected: true }
       );
 
+      // Fade all other features
+      fadeUnselectedFeatures(map, clickedFeature.id);
+
       // Pan map to fit the polygon bounds
       if (clickedFeature.geometry && clickedFeature.geometry.coordinates) {
         const bounds = new mapboxgl.LngLatBounds();
@@ -258,6 +309,9 @@ export function setupMapInteractions(map, popup, getSelectedId, setSelectedId, s
         );
         setSelectedId(null);
       }
+
+      // Unfade all features
+      unfadeAllFeatures(map);
 
       // Close panel
       closeDetails();

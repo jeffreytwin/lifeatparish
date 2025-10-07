@@ -3,6 +3,7 @@
  */
 
 import { defaultPriceRange, filterState, getHousesForSale } from './state.js';
+import { unfadeAllFeatures } from './map.js';
 
 let map = null;
 
@@ -171,6 +172,11 @@ export function closeDetailsPanel() {
 
   panel.classList.remove('open');
   mapContainer.classList.remove('panel-open');
+
+  // Unfade all features when closing panel
+  if (map) {
+    unfadeAllFeatures(map);
+  }
 
   // Resize map to fit new container size
   if (map) {
