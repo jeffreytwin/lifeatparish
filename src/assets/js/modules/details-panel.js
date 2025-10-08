@@ -192,34 +192,89 @@ export function showNeighborhoodDetails(neighborhood) {
   statsContainer.className = 'flex gap-4 mb-6 mt-4';
 
   // Homes for Sale count
-  const homesCount = document.createElement('div');
-  homesCount.className = 'flex-1 bg-white rounded-lg border-2 border-gray-200 p-4 text-center';
-  homesCount.innerHTML = `
-    <div style="font-size: 2rem; font-weight: 700; color: ${themeColor};">${filteredHouses.length}</div>
-    <div style="font-size: 0.875rem; color: #6b7280; font-weight: 600; margin-top: 0.25rem;">Homes for Sale</div>
-  `;
-  statsContainer.appendChild(homesCount);
+  // const homesCount = document.createElement('div');
+  // homesCount.className = 'flex-1 bg-white rounded-lg border-2 border-gray-200 p-4 text-center';
+  // homesCount.innerHTML = `
+  //   <div style="font-size: 2rem; font-weight: 700; color: ${themeColor};">${filteredHouses.length}</div>
+  //   <div style="font-size: 0.875rem; color: #6b7280; font-weight: 600; margin-top: 0.25rem;">Homes for Sale</div>
+  // `;
+  // statsContainer.appendChild(homesCount);
 
   // Floor Plans count (placeholder - will fetch on-demand)
-  const floorPlansCount = document.createElement('div');
-  floorPlansCount.className = 'flex-1 bg-white rounded-lg border-2 border-gray-200 p-4 text-center';
-  floorPlansCount.innerHTML = `
-    <div style="font-size: 2rem; font-weight: 700; color: ${themeColor};">-</div>
-    <div style="font-size: 0.875rem; color: #6b7280; font-weight: 600; margin-top: 0.25rem;">Floor Plans</div>
-  `;
-  statsContainer.appendChild(floorPlansCount);
+  // const floorPlansCount = document.createElement('div');
+  // floorPlansCount.className = 'flex-1 bg-white rounded-lg border-2 border-gray-200 p-4 text-center';
+  // floorPlansCount.innerHTML = `
+  //   <div style="font-size: 2rem; font-weight: 700; color: ${themeColor};">-</div>
+  //   <div style="font-size: 0.875rem; color: #6b7280; font-weight: 600; margin-top: 0.25rem;">Floor Plans</div>
+  // `;
+  // statsContainer.appendChild(floorPlansCount);
 
-  contentElement.appendChild(statsContainer);
+  // contentElement.appendChild(statsContainer);
+
+  // === SPECS SECTION (Bedrooms, Bathrooms, Garage, Sqft) ===
+  if (neighborhoodData) {
+    const specsSection = document.createElement('div');
+    specsSection.className = 'mb-6';
+
+    const specsGrid = document.createElement('div');
+    specsGrid.className = 'grid grid-cols-2 gap-4';
+
+    // Bedrooms
+    if (neighborhoodData.bedroomRange) {
+      const bedroomItem = document.createElement('div');
+      bedroomItem.className = 'flex flex-col items-center text-center';
+      bedroomItem.innerHTML = `
+        <img src="https://static.wixstatic.com/media/d0be81_3dc38905965d4491b16f0d134f6c02bc~mv2.png/v1/fill/w_34,h_26,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/Bedroom%20Icon%20-%20Teal.png" alt="Bedrooms" class="w-12 h-12 object-contain mb-2" />
+        <span class="text-sm font-semibold mb-1" style="color: #4AC2A9;">Bedrooms</span>
+        <span class="text-sm text-gray-700">${neighborhoodData.bedroomRange}</span>
+      `;
+      specsGrid.appendChild(bedroomItem);
+    }
+
+    // Bathrooms
+    if (neighborhoodData.bathroomRange) {
+      const bathroomItem = document.createElement('div');
+      bathroomItem.className = 'flex flex-col items-center text-center';
+      bathroomItem.innerHTML = `
+        <img src="https://static.wixstatic.com/media/d0be81_82d4b4e3840145d5b4cc09b0b3d52749~mv2.png/v1/fill/w_37,h_34,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/Shower%20Icon%20-%20Teal.png" alt="Bathrooms" class="w-12 h-12 object-contain mb-2" />
+        <span class="text-sm font-semibold mb-1" style="color: #4AC2A9;">Bathrooms</span>
+        <span class="text-sm text-gray-700">${neighborhoodData.bathroomRange}</span>
+      `;
+      specsGrid.appendChild(bathroomItem);
+    }
+
+    // Garage
+    if (neighborhoodData.garageSizeRange) {
+      const garageItem = document.createElement('div');
+      garageItem.className = 'flex flex-col items-center text-center';
+      garageItem.innerHTML = `
+        <img src="https://static.wixstatic.com/media/d0be81_b3139303e62f425aa1a0248a096469f7~mv2.png/v1/fill/w_35,h_34,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/Garage%20Icon%20-%20Teal.png" alt="Garage" class="w-12 h-12 object-contain mb-2" />
+        <span class="text-sm font-semibold mb-1" style="color: #4AC2A9;">Garages</span>
+        <span class="text-sm text-gray-700">${neighborhoodData.garageSizeRange}</span>
+      `;
+      specsGrid.appendChild(garageItem);
+    }
+
+    // Square Feet
+    if (neighborhoodData.squareFeet) {
+      const sqftItem = document.createElement('div');
+      sqftItem.className = 'flex flex-col items-center text-center';
+      sqftItem.innerHTML = `
+        <img src="https://static.wixstatic.com/media/d0be81_7cf193b58f5846f6a425af5b2e9c5109~mv2.png/v1/crop/x_27,y_0,w_904,h_957/fill/w_51,h_54,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/House%20Icon%20-%20Teal.png" alt="Size" class="w-12 h-12 object-contain mb-2" />
+        <span class="text-sm font-semibold mb-1" style="color: #4AC2A9;">Square Feet</span>
+        <span class="text-sm text-gray-700">${neighborhoodData.squareFeet}</span>
+      `;
+      specsGrid.appendChild(sqftItem);
+    }
+
+    specsSection.appendChild(specsGrid);
+    contentElement.appendChild(specsSection);
+  }
 
   // === SHORT DESCRIPTION SECTION ===
   if (neighborhoodData && neighborhoodData.villageShortDescription) {
     const descSection = document.createElement('div');
     descSection.className = 'mb-6';
-
-    const descTitle = document.createElement('h3');
-    descTitle.className = 'text-lg font-bold text-gray-900 mb-2';
-    descTitle.textContent = 'About This Neighborhood';
-    descSection.appendChild(descTitle);
 
     const descText = document.createElement('p');
     descText.className = 'text-gray-700 leading-relaxed';
