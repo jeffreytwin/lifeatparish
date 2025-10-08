@@ -326,6 +326,9 @@ export function setupMapInteractions(map, popup, getSelectedId, setSelectedId, s
 
       // Add image container with shimmer if image exists
       if (imageUrl) {
+        const imageWrapper = document.createElement('div');
+        imageWrapper.style.cssText = 'position: relative; width: 280px; height: 160px;';
+
         const { container } = createImageWithLoader(
           imageUrl,
           properties.neighborhood,
@@ -333,7 +336,17 @@ export function setupMapInteractions(map, popup, getSelectedId, setSelectedId, s
           'width: 280px; height: 160px;',
           imageCache
         );
-        popupContainer.appendChild(container);
+        imageWrapper.appendChild(container);
+
+        // Add New Construction badge if applicable
+        if (isNewConstruction) {
+          const badge = document.createElement('div');
+          badge.style.cssText = 'position: absolute; top: 0.75rem; left: 0.75rem; background: #676ACE; color: white; padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.625rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.025em; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);';
+          badge.textContent = 'New Construction';
+          imageWrapper.appendChild(badge);
+        }
+
+        popupContainer.appendChild(imageWrapper);
       }
 
       // Add content section
