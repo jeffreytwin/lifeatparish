@@ -3,7 +3,7 @@
  */
 
 import mapboxgl from 'mapbox-gl';
-import { getNeighborhoodsData, getVillagesWithFloorPlans } from './state.js';
+import { getHousesForSale, getNeighborhoodsData, getVillagesWithFloorPlans } from './state.js';
 
 /**
  * Fetch neighborhood GeoJSON data
@@ -73,6 +73,67 @@ export function hasNewConstruction(neighborhoodName) {
   // Check if this neighborhood's ID exists in the floor plans Set
   const villagesWithFloorPlans = getVillagesWithFloorPlans();
   return villagesWithFloorPlans.has(neighborhoodData._id);
+}
+
+/**
+ * Calculate actual price range from houses for sale in a neighborhood
+ * @param {string} neighborhoodName - Name of the neighborhood
+ * @returns {string|null} Formatted price range or null if no houses
+ */
+function calculatePriceRange(neighborhoodName) {
+  const houses = getHousesForSale();
+
+  console.log(`Calculating price for "${neighborhoodName}". Total houses: ${houses.length}`);
+
+  // Normalize both the search name and house village names for comparison
+  const normalizedSearchName = normalizeNeighborhoodName(neighborhoodName);
+
+  // Filter houses in this neighborhood using normalized comparison
+  const neighborhoodHouses = houses.filter(h => {
+    const houseVillage = h.village || '';
+    const normalizedHouseVillage = normalizeNeighborhoodName(houseVillage);
+    return normalizedHouseVillage === normalizedSearchName;
+  });
+
+  console.log(`Found ${neighborhoodHouses.length} houses in "${neighborhoodName}"`);
+
+  if (neighborhoodHouses.length === 0) {
+    return null;
+  }
+
+  // Extract prices (use listingPricePure which is the numeric value)
+  const prices = neighborhoodHouses
+    .map(h => h.listingPricePure)
+    .filter(p => p && !isNaN(p));
+
+  console.log(`Extracted ${prices.length} valid prices from ${neighborhoodHouses.length} houses:`, prices.slice(0, 5));
+
+  if (prices.length === 0) {
+    return null;
+  }
+
+  const minPrice = Math.min(...prices);
+  const maxPrice = Math.max(...prices);
+
+  // Round min down to nearest 100K, max up to nearest 100K
+  const roundedMin = Math.floor(minPrice / 100000) * 100000;
+  const roundedMax = Math.ceil(maxPrice / 100000) * 100000;
+
+  // Format prices in thousands (e.g., "$300K - $500K")
+  const formatPrice = (price) => {
+    if (price >= 1000000) {
+      const millions = price / 1000000;
+      // Remove decimal if it's a whole number
+      return millions % 1 === 0 ? `$${millions}M` : `$${millions.toFixed(1)}M`;
+    }
+    return `$${price / 1000}K`;
+  };
+
+  if (roundedMin === roundedMax) {
+    return formatPrice(roundedMin);
+  }
+
+  return `${formatPrice(roundedMin)} - ${formatPrice(roundedMax)}`;
 }
 
 /**
@@ -223,13 +284,19 @@ export function loadNeighborhoodsGeojson(map, geojson) {
       // Use Wix amenitiesTags if available, otherwise keep original amenities
       const amenities = neighborhoodData?.amenitiesTags || feature.properties.amenities || [];
 
+      // Calculate actual price range from houses for sale
+      const calculatedPriceRange = calculatePriceRange(wixName);
+
+      console.log(`Price range for "${wixName}": ${calculatedPriceRange}`);
+
       return {
         ...feature,
         properties: {
           ...feature.properties,
           neighborhood: wixName, // Use Wix name
           new_construction: hasNew, // Check using original for matching
-          amenities: amenities // Use Wix amenitiesTags
+          amenities: amenities, // Use Wix amenitiesTags
+          priceRange: calculatedPriceRange // Actual price range from houses
         }
       };
     })
@@ -393,7 +460,9 @@ export function setupMapInteractions(map, popup, getSelectedId, setSelectedId, s
       const imageUrl = neighborhoodData ? convertWixImageUrl(neighborhoodData.topBackgroundImage) : null;
 
       // Build popup HTML with enhanced styling
-      const priceText = properties.price_range ? properties.price_range : '';
+      console.log('Popup - properties.priceRange:', properties.priceRange);
+      console.log('Popup - all properties:', properties);
+      const priceText = properties.priceRange ? properties.priceRange : '';
       const constructionStatus = isNewConstruction ? 'New Construction' : '';
 
       // Build the popup content

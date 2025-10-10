@@ -432,14 +432,13 @@ export function setupClearAll(applyFiltersCallback) {
 /**
  * Apply Filters to Map
  * @param {mapboxgl.Map} map - The map instance
- * @param {Object} geojson - The GeoJSON data
- * @param {Array} neighborhoods - Array of neighborhood objects from Wix
+ * @param {Object} geojson - The GeoJSON data (enhanced with Wix data)
  * @param {Function} getSelectedId - Function to get selected neighborhood ID
  * @param {Function} setSelectedId - Function to set selected neighborhood ID
  * @param {Function} closeDetails - Function to close details panel
  * @param {Function} updateFilterUICallback - Callback to update filter UI
  */
-export function applyFilters(map, geojson, neighborhoods, getSelectedId, setSelectedId, closeDetails, updateFilterUICallback) {
+export function applyFilters(map, geojson, getSelectedId, setSelectedId, closeDetails, updateFilterUICallback) {
 
   // Clear selected polygon and close details panel when filtering
   if (getSelectedId() !== null) {
@@ -526,6 +525,13 @@ export function applyFilters(map, geojson, neighborhoods, getSelectedId, setSele
           matches = false; // Reject houses without valid prices when filtering by price
         } else {
           const inRange = price >= filterState.priceMin && price <= filterState.priceMax;
+
+          // Debug: log if house matches but seems outside expected range
+          if (inRange && debugCount < 5) {
+            console.log(`✅ Price match: ${house.village} - $${price}K (filter: ${filterState.priceMin}K - ${filterState.priceMax}K)`);
+            debugCount++;
+          }
+
           matches = matches && inRange;
         }
       }

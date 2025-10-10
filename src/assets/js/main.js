@@ -217,7 +217,7 @@ function initializeFilters() {
 
   // Wrapper for applyFilters that provides all necessary dependencies
   const applyFiltersWrapper = () => {
-    applyFiltersModule(map, enhancedGeojson, neighborhoods, getSelectedNeighborhoodId, setSelectedNeighborhoodId, closeDetailsPanel, updateFilterUI);
+    applyFiltersModule(map, enhancedGeojson, getSelectedNeighborhoodId, setSelectedNeighborhoodId, closeDetailsPanel, updateFilterUI);
   };
 
   // Setup filters with houses data, neighborhoods data, and enhanced GeoJSON

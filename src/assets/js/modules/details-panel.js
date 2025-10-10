@@ -157,11 +157,20 @@ export function showNeighborhoodDetails(neighborhood) {
       headerContainer.appendChild(badge);
     }
 
-    // Overlay with neighborhood name
+    // Overlay with neighborhood name and price range
     const overlay = document.createElement('div');
     overlay.className = 'absolute bottom-0 left-0 right-0';
     overlay.style.cssText = 'background: linear-gradient(to top, rgba(0,0,0,0.8), transparent); padding: 2rem 2rem 1rem 2rem;';
-    overlay.innerHTML = `<h2 class="text-3xl font-bold text-white m-0">${neighborhood.neighborhood}</h2>`;
+
+    const titleHtml = `<h2 class="text-3xl font-bold text-white m-0">${neighborhood.neighborhood}</h2>`;
+    // Use calculated price range from enhanced GeoJSON, not Wix static field
+    console.log('Details panel - neighborhood.priceRange:', neighborhood.priceRange);
+    console.log('Details panel - full neighborhood:', neighborhood);
+    const priceRangeHtml = neighborhood.priceRange
+      ? `<p class="text-base text-white text-opacity-90 mb-0">${neighborhood.priceRange}</p>`
+      : '';
+
+    overlay.innerHTML = titleHtml + priceRangeHtml;
     headerContainer.appendChild(overlay);
 
     // Close button on image
