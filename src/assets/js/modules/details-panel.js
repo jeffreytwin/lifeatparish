@@ -111,7 +111,8 @@ function getAmenityImageField(amenityTag) {
     'Gated': 'gatedImage',
     'Gated Community': 'gatedImage',
     'Nature Trails': 'trailsImage',
-    'Community Events': 'lifestyleDirectorImage'
+    'Community Events': 'lifestyleDirectorImage',
+    '55+': 'ageRestrictedImage'
   };
 
   return mapping[amenityTag] || null;
