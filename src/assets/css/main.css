@@ -1,4 +1,13 @@
+/* Import Open Sans font */
+@import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;500;600;700;800&display=swap');
 @import "tailwindcss";
+
+
+/* Apply Open Sans globally */
+* {
+    font-family: 'Open Sans', sans-serif;
+}
+
 .app-container {
     display: flex;
     flex-direction: column;

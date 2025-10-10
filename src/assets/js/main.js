@@ -167,17 +167,16 @@ map.on('load', () => {
     onAdd(map) {
       this.map = map;
       this.container = document.createElement('div');
-      this.container.className = 'mapboxgl-ctrl';
-      this.container.style.cssText = 'background: white; padding: 10px; border-radius: 4px; box-shadow: 0 0 0 2px rgba(0,0,0,.1);';
+      this.container.className = 'mapboxgl-ctrl bg-white p-2.5 rounded shadow-md';
 
       this.container.innerHTML = `
-        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
-          <div style="width: 16px; height: 16px; background: #10b981; border-radius: 3px;"></div>
-          <span style="font-size: 12px; color: #374151;">New Construction</span>
+        <div class="flex items-center gap-2 mb-1.5">
+          <div class="w-4 h-4 rounded-sm" style="background: #10b981;"></div>
+          <span class="text-xs text-gray-700">New Construction</span>
         </div>
-        <div style="display: flex; align-items: center; gap: 8px;">
-          <div style="width: 16px; height: 16px; background: #676ACE; border-radius: 3px;"></div>
-          <span style="font-size: 12px; color: #374151;">Resale Homes</span>
+        <div class="flex items-center gap-2">
+          <div class="w-4 h-4 rounded-sm" style="background: #676ACE;"></div>
+          <span class="text-xs text-gray-700">Resale Homes</span>
         </div>
       `;
 

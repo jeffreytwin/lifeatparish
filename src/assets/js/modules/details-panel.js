@@ -284,6 +284,18 @@ export function showNeighborhoodDetails(neighborhood) {
     const specsGrid = document.createElement('div');
     specsGrid.className = 'grid grid-cols-2 gap-2';
 
+    // Home Types
+    if (neighborhoodData.bathroomRange) {
+      const bathroomItem = document.createElement('div');
+      bathroomItem.className = 'flex flex-col items-center text-center';
+      bathroomItem.innerHTML = `
+        <img loading="lazy" sizes="37px" srcset="https://static.wixstatic.com/media/d0be81_82d4b4e3840145d5b4cc09b0b3d52749~mv2.png/v1/fill/w_37,h_34,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/Shower%20Icon%20-%20Teal.png 1x, https://static.wixstatic.com/media/d0be81_82d4b4e3840145d5b4cc09b0b3d52749~mv2.png/v1/fill/w_74,h_68,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/Shower%20Icon%20-%20Teal.png 2x" id="img_comp-kpf34lrb__a1d14dd0-0470-468a-915b-7835e90bb0c6" src="https://static.wixstatic.com/media/d0be81_82d4b4e3840145d5b4cc09b0b3d52749~mv2.png/v1/fill/w_37,h_34,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/Shower%20Icon%20-%20Teal.png" alt="Bathrooms" class="w-8 h-8 object-contain" />
+        <span class="text-sm font-semibold" style="color: #4AC2A9;">Home Types</span>
+        <span class="text-xs text-gray-700">${neighborhoodData.homeTypes}</span>
+      `;
+      specsGrid.appendChild(bathroomItem);
+    }
+
     // Bedrooms
     if (neighborhoodData.bedroomRange) {
       const bedroomItem = document.createElement('div');
@@ -296,17 +308,6 @@ export function showNeighborhoodDetails(neighborhood) {
       specsGrid.appendChild(bedroomItem);
     }
 
-    // Bathrooms
-    if (neighborhoodData.bathroomRange) {
-      const bathroomItem = document.createElement('div');
-      bathroomItem.className = 'flex flex-col items-center text-center';
-      bathroomItem.innerHTML = `
-        <img loading="lazy" sizes="37px" srcset="https://static.wixstatic.com/media/d0be81_82d4b4e3840145d5b4cc09b0b3d52749~mv2.png/v1/fill/w_37,h_34,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/Shower%20Icon%20-%20Teal.png 1x, https://static.wixstatic.com/media/d0be81_82d4b4e3840145d5b4cc09b0b3d52749~mv2.png/v1/fill/w_74,h_68,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/Shower%20Icon%20-%20Teal.png 2x" id="img_comp-kpf34lrb__a1d14dd0-0470-468a-915b-7835e90bb0c6" src="https://static.wixstatic.com/media/d0be81_82d4b4e3840145d5b4cc09b0b3d52749~mv2.png/v1/fill/w_37,h_34,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/Shower%20Icon%20-%20Teal.png" alt="Bathrooms" class="w-8 h-8 object-contain" />
-        <span class="text-sm font-semibold" style="color: #4AC2A9;">Bathrooms</span>
-        <span class="text-xs text-gray-700">${neighborhoodData.bathroomRange}</span>
-      `;
-      specsGrid.appendChild(bathroomItem);
-    }
 
     // Garage
     if (neighborhoodData.garageSizeRange) {
