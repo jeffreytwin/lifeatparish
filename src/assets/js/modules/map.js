@@ -16,12 +16,26 @@ export async function fetchNeighborhoodGeojson() {
 }
 
 /**
+ * Map GeoJSON neighborhood names to Wix neighborhood names
+ * Handles discrepancies in naming between the two data sources
+ */
+const NEIGHBORHOOD_NAME_MAPPING = {
+  'Oakfield': 'Oakfield Lakes',
+  'Del Webb BayView': 'Del Webb at Bayview',
+  'Isles at BayView': 'Isles at Bayview',
+  'The Islands on the Manatee River': 'The Islands on The Manatee River'
+};
+
+/**
  * Normalize neighborhood name for matching
  * @param {string} name - Neighborhood name
  * @returns {string} Normalized name
  */
 function normalizeNeighborhoodName(name) {
-  return name.toLowerCase()
+  // First, check if there's a direct mapping
+  const mappedName = NEIGHBORHOOD_NAME_MAPPING[name] || name;
+
+  return mappedName.toLowerCase()
     .replace(/\s+/g, '') // Remove spaces
     .replace(/[^a-z0-9]/g, ''); // Remove special characters
 }
@@ -177,16 +191,23 @@ export function fitMapToAllNeighborhoods(map, geojson) {
  * @param {Object} geojson - The GeoJSON data
  */
 export function loadNeighborhoodsGeojson(map, geojson) {
-  // Dynamically set new_construction property based on floor plans data
+  // Dynamically set new_construction property and use Wix names
   const enhancedGeojson = {
     ...geojson,
-    features: geojson.features.map(feature => ({
-      ...feature,
-      properties: {
-        ...feature.properties,
-        new_construction: hasNewConstruction(feature.properties.neighborhood)
-      }
-    }))
+    features: geojson.features.map(feature => {
+      const originalName = feature.properties.neighborhood;
+      // Use mapped Wix name if available, otherwise keep original
+      const wixName = NEIGHBORHOOD_NAME_MAPPING[originalName] || originalName;
+
+      return {
+        ...feature,
+        properties: {
+          ...feature.properties,
+          neighborhood: wixName, // Use Wix name
+          new_construction: hasNewConstruction(originalName) // Check using original for matching
+        }
+      };
+    })
   };
 
   // add the polygons
