@@ -525,13 +525,6 @@ export function applyFilters(map, geojson, getSelectedId, setSelectedId, closeDe
           matches = false; // Reject houses without valid prices when filtering by price
         } else {
           const inRange = price >= filterState.priceMin && price <= filterState.priceMax;
-
-          // Debug: log if house matches but seems outside expected range
-          if (inRange && debugCount < 5) {
-            console.log(`✅ Price match: ${house.village} - $${price}K (filter: ${filterState.priceMin}K - ${filterState.priceMax}K)`);
-            debugCount++;
-          }
-
           matches = matches && inRange;
         }
       }

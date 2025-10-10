@@ -59,6 +59,33 @@ function findNeighborhoodData(neighborhoodName) {
 }
 
 /**
+ * Extract YouTube video ID from various URL formats
+ * @param {string} url - YouTube URL
+ * @returns {string|null} Video ID or null if invalid
+ */
+function extractYouTubeVideoId(url) {
+  if (!url) return null;
+
+  // Handle different YouTube URL formats:
+  // https://www.youtube.com/watch?v=VIDEO_ID
+  // https://youtu.be/VIDEO_ID
+  // https://www.youtube.com/embed/VIDEO_ID
+
+  const patterns = [
+    /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&?\/\s]+)/,
+  ];
+
+  for (const pattern of patterns) {
+    const match = url.match(pattern);
+    if (match && match[1]) {
+      return match[1];
+    }
+  }
+
+  return null;
+}
+
+/**
  * Map amenity tag to its corresponding image field name in neighborhood data
  * @param {string} amenityTag - The amenity tag (e.g., "Community Pool")
  * @returns {string} The field name for the image (e.g., "poolImage")
@@ -125,7 +152,7 @@ export function showNeighborhoodDetails(neighborhood) {
   // Create content element for scrollable content
   const contentElement = document.createElement('div');
   contentElement.className = 'details-body';
-  contentElement.style.paddingBottom = '100px'; // Add padding for fixed button
+  // No longer need padding since button is outside content area
   detailsContent.appendChild(contentElement);
 
   // === HEADER IMAGE SECTION ===
@@ -134,7 +161,7 @@ export function showNeighborhoodDetails(neighborhood) {
   if (imageUrl) {
     const headerContainer = document.createElement('div');
     headerContainer.className = 'relative';
-    headerContainer.style.cssText = 'height: 240px; margin: -1.5rem -2rem 0 -2rem;';
+    headerContainer.style.cssText = 'height: 240px;';
 
     // Create image with loader
     // Panel is 400px wide, we need full bleed (extend beyond 2rem padding on each side)
@@ -164,8 +191,6 @@ export function showNeighborhoodDetails(neighborhood) {
 
     const titleHtml = `<h2 class="text-3xl font-bold text-white m-0">${neighborhood.neighborhood}</h2>`;
     // Use calculated price range from enhanced GeoJSON, not Wix static field
-    console.log('Details panel - neighborhood.priceRange:', neighborhood.priceRange);
-    console.log('Details panel - full neighborhood:', neighborhood);
     const priceRangeHtml = neighborhood.priceRange
       ? `<p class="text-base text-white text-opacity-90 mb-0">${neighborhood.priceRange}</p>`
       : '';
@@ -210,7 +235,8 @@ export function showNeighborhoodDetails(neighborhood) {
   }
 
   // === KEY STATS SECTION ===
-  const filteredHouses = filterHousesByNeighborhood(neighborhood.neighborhood);
+  // Commented out for now - can re-enable if needed
+  // const filteredHouses = filterHousesByNeighborhood(neighborhood.neighborhood);
 
   const statsContainer = document.createElement('div');
   statsContainer.className = 'flex gap-4 mb-6 mt-4';
@@ -241,16 +267,16 @@ export function showNeighborhoodDetails(neighborhood) {
     specsSection.className = 'mb-6';
 
     const specsGrid = document.createElement('div');
-    specsGrid.className = 'grid grid-cols-2 gap-4';
+    specsGrid.className = 'grid grid-cols-2 gap-2';
 
     // Bedrooms
     if (neighborhoodData.bedroomRange) {
       const bedroomItem = document.createElement('div');
       bedroomItem.className = 'flex flex-col items-center text-center';
       bedroomItem.innerHTML = `
-        <img src="https://static.wixstatic.com/media/d0be81_3dc38905965d4491b16f0d134f6c02bc~mv2.png/v1/fill/w_34,h_26,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/Bedroom%20Icon%20-%20Teal.png" alt="Bedrooms" class="w-12 h-12 object-contain mb-2" />
-        <span class="text-sm font-semibold mb-1" style="color: #4AC2A9;">Bedrooms</span>
-        <span class="text-sm text-gray-700">${neighborhoodData.bedroomRange}</span>
+        <img loading="lazy" sizes="34px" srcset="https://static.wixstatic.com/media/d0be81_3dc38905965d4491b16f0d134f6c02bc~mv2.png/v1/fill/w_34,h_26,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/Bedroom%20Icon%20-%20Teal.png 1x, https://static.wixstatic.com/media/d0be81_3dc38905965d4491b16f0d134f6c02bc~mv2.png/v1/fill/w_68,h_52,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/Bedroom%20Icon%20-%20Teal.png 2x"  src="https://static.wixstatic.com/media/d0be81_3dc38905965d4491b16f0d134f6c02bc~mv2.png/v1/fill/w_34,h_26,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/Bedroom%20Icon%20-%20Teal.png" alt="Bedrooms" class="w-8 h-8 object-contain" />
+        <span class="text-sm font-semibold" style="color: #4AC2A9;">Bedrooms</span>
+        <span class="text-xs text-gray-700">${neighborhoodData.bedroomRange}</span>
       `;
       specsGrid.appendChild(bedroomItem);
     }
@@ -260,9 +286,9 @@ export function showNeighborhoodDetails(neighborhood) {
       const bathroomItem = document.createElement('div');
       bathroomItem.className = 'flex flex-col items-center text-center';
       bathroomItem.innerHTML = `
-        <img src="https://static.wixstatic.com/media/d0be81_82d4b4e3840145d5b4cc09b0b3d52749~mv2.png/v1/fill/w_37,h_34,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/Shower%20Icon%20-%20Teal.png" alt="Bathrooms" class="w-12 h-12 object-contain mb-2" />
-        <span class="text-sm font-semibold mb-1" style="color: #4AC2A9;">Bathrooms</span>
-        <span class="text-sm text-gray-700">${neighborhoodData.bathroomRange}</span>
+        <img loading="lazy" sizes="37px" srcset="https://static.wixstatic.com/media/d0be81_82d4b4e3840145d5b4cc09b0b3d52749~mv2.png/v1/fill/w_37,h_34,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/Shower%20Icon%20-%20Teal.png 1x, https://static.wixstatic.com/media/d0be81_82d4b4e3840145d5b4cc09b0b3d52749~mv2.png/v1/fill/w_74,h_68,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/Shower%20Icon%20-%20Teal.png 2x" id="img_comp-kpf34lrb__a1d14dd0-0470-468a-915b-7835e90bb0c6" src="https://static.wixstatic.com/media/d0be81_82d4b4e3840145d5b4cc09b0b3d52749~mv2.png/v1/fill/w_37,h_34,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/Shower%20Icon%20-%20Teal.png" alt="Bathrooms" class="w-8 h-8 object-contain" />
+        <span class="text-sm font-semibold" style="color: #4AC2A9;">Bathrooms</span>
+        <span class="text-xs text-gray-700">${neighborhoodData.bathroomRange}</span>
       `;
       specsGrid.appendChild(bathroomItem);
     }
@@ -272,9 +298,9 @@ export function showNeighborhoodDetails(neighborhood) {
       const garageItem = document.createElement('div');
       garageItem.className = 'flex flex-col items-center text-center';
       garageItem.innerHTML = `
-        <img src="https://static.wixstatic.com/media/d0be81_b3139303e62f425aa1a0248a096469f7~mv2.png/v1/fill/w_35,h_34,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/Garage%20Icon%20-%20Teal.png" alt="Garage" class="w-12 h-12 object-contain mb-2" />
-        <span class="text-sm font-semibold mb-1" style="color: #4AC2A9;">Garages</span>
-        <span class="text-sm text-gray-700">${neighborhoodData.garageSizeRange}</span>
+        <img loading="lazy" sizes="35px" srcset="https://static.wixstatic.com/media/d0be81_b3139303e62f425aa1a0248a096469f7~mv2.png/v1/fill/w_35,h_34,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/Garage%20Icon%20-%20Teal.png 1x, https://static.wixstatic.com/media/d0be81_b3139303e62f425aa1a0248a096469f7~mv2.png/v1/fill/w_70,h_68,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/Garage%20Icon%20-%20Teal.png 2x" src="https://static.wixstatic.com/media/d0be81_b3139303e62f425aa1a0248a096469f7~mv2.png/v1/fill/w_35,h_34,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/Garage%20Icon%20-%20Teal.png" alt="Garage" class="w-8 h-8 object-contain" />
+        <span class="text-sm font-semibold" style="color: #4AC2A9;">Garages</span>
+        <span class="text-xs text-gray-700">${neighborhoodData.garageSizeRange}</span>
       `;
       specsGrid.appendChild(garageItem);
     }
@@ -284,15 +310,40 @@ export function showNeighborhoodDetails(neighborhood) {
       const sqftItem = document.createElement('div');
       sqftItem.className = 'flex flex-col items-center text-center';
       sqftItem.innerHTML = `
-        <img src="https://static.wixstatic.com/media/d0be81_7cf193b58f5846f6a425af5b2e9c5109~mv2.png/v1/crop/x_27,y_0,w_904,h_957/fill/w_51,h_54,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/House%20Icon%20-%20Teal.png" alt="Size" class="w-12 h-12 object-contain mb-2" />
-        <span class="text-sm font-semibold mb-1" style="color: #4AC2A9;">Square Feet</span>
-        <span class="text-sm text-gray-700">${neighborhoodData.squareFeet}</span>
+        <img loading="lazy" sizes="51px" srcset="https://static.wixstatic.com/media/d0be81_7cf193b58f5846f6a425af5b2e9c5109~mv2.png/v1/crop/x_27,y_0,w_904,h_957/fill/w_51,h_54,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/House%20Icon%20-%20Teal.png 1x, https://static.wixstatic.com/media/d0be81_7cf193b58f5846f6a425af5b2e9c5109~mv2.png/v1/crop/x_27,y_0,w_904,h_957/fill/w_102,h_108,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/House%20Icon%20-%20Teal.png 2x"  src="https://static.wixstatic.com/media/d0be81_7cf193b58f5846f6a425af5b2e9c5109~mv2.png/v1/crop/x_27,y_0,w_904,h_957/fill/w_51,h_54,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/House%20Icon%20-%20Teal.png" alt="Size" class="w-8 h-8 object-contain" />
+        <span class="text-sm font-semibold" style="color: #4AC2A9;">Square Feet</span>
+        <span class="text-xs text-gray-700">${neighborhoodData.squareFeet}</span>
       `;
       specsGrid.appendChild(sqftItem);
     }
 
     specsSection.appendChild(specsGrid);
     contentElement.appendChild(specsSection);
+  }
+
+  // === YOUTUBE VIDEO SECTION ===
+  if (neighborhoodData && neighborhoodData.youTubeVideo) {
+    const videoId = extractYouTubeVideoId(neighborhoodData.youTubeVideo);
+
+    if (videoId) {
+      const videoSection = document.createElement('div');
+      videoSection.className = 'mb-6';
+
+      const videoContainer = document.createElement('div');
+      videoContainer.className = 'relative w-full';
+      videoContainer.style.paddingBottom = '56.25%'; // 16:9 aspect ratio
+
+      const iframe = document.createElement('iframe');
+      iframe.className = 'absolute top-0 left-0 w-full h-full';
+      iframe.src = `https://www.youtube.com/embed/${videoId}`;
+      iframe.setAttribute('frameborder', '0');
+      iframe.setAttribute('allow', 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture');
+      iframe.setAttribute('allowfullscreen', '');
+
+      videoContainer.appendChild(iframe);
+      videoSection.appendChild(videoContainer);
+      contentElement.appendChild(videoSection);
+    }
   }
 
   // === SHORT DESCRIPTION SECTION ===
@@ -358,7 +409,7 @@ export function showNeighborhoodDetails(neighborhood) {
     }
 
     const buttonContainer = document.createElement('div');
-    buttonContainer.className = 'explore-button-container absolute bottom-0 left-0 right-0 p-4 bg-white border-t-2 border-gray-200';
+    buttonContainer.className = 'explore-button-container p-4 bg-white border-t-2 border-gray-200';
     buttonContainer.style.cssText = 'box-shadow: 0 -4px 6px -1px rgba(0, 0, 0, 0.1);';
 
     const exploreButton = document.createElement('a');

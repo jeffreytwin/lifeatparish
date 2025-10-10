@@ -83,8 +83,6 @@ export function hasNewConstruction(neighborhoodName) {
 function calculatePriceRange(neighborhoodName) {
   const houses = getHousesForSale();
 
-  console.log(`Calculating price for "${neighborhoodName}". Total houses: ${houses.length}`);
-
   // Normalize both the search name and house village names for comparison
   const normalizedSearchName = normalizeNeighborhoodName(neighborhoodName);
 
@@ -95,8 +93,6 @@ function calculatePriceRange(neighborhoodName) {
     return normalizedHouseVillage === normalizedSearchName;
   });
 
-  console.log(`Found ${neighborhoodHouses.length} houses in "${neighborhoodName}"`);
-
   if (neighborhoodHouses.length === 0) {
     return null;
   }
@@ -105,8 +101,6 @@ function calculatePriceRange(neighborhoodName) {
   const prices = neighborhoodHouses
     .map(h => h.listingPricePure)
     .filter(p => p && !isNaN(p));
-
-  console.log(`Extracted ${prices.length} valid prices from ${neighborhoodHouses.length} houses:`, prices.slice(0, 5));
 
   if (prices.length === 0) {
     return null;
@@ -287,8 +281,6 @@ export function loadNeighborhoodsGeojson(map, geojson) {
       // Calculate actual price range from houses for sale
       const calculatedPriceRange = calculatePriceRange(wixName);
 
-      console.log(`Price range for "${wixName}": ${calculatedPriceRange}`);
-
       return {
         ...feature,
         properties: {
@@ -460,8 +452,6 @@ export function setupMapInteractions(map, popup, getSelectedId, setSelectedId, s
       const imageUrl = neighborhoodData ? convertWixImageUrl(neighborhoodData.topBackgroundImage) : null;
 
       // Build popup HTML with enhanced styling
-      console.log('Popup - properties.priceRange:', properties.priceRange);
-      console.log('Popup - all properties:', properties);
       const priceText = properties.priceRange ? properties.priceRange : '';
       const constructionStatus = isNewConstruction ? 'New Construction' : '';
 
