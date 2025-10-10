@@ -4,7 +4,7 @@ import { fetchFloorPlans, fetchHousesForSale, fetchNeighborhoods } from './modul
 import { closeDetailsPanel, initDetailsPanel, showNeighborhoodDetails } from './modules/details-panel.js';
 import { applyFilters as applyFiltersModule, setupFilters, updateFilterUI } from './modules/filters.js';
 import { createPopup, fetchNeighborhoodGeojson, fitMapToAllNeighborhoods, getEnhancedGeojson, loadNeighborhoodsGeojson, setupMapInteractions } from './modules/map.js';
-import { getHousesForSale, getSelectedNeighborhoodId, setHousesForSale, setNeighborhoodsData, setSelectedNeighborhoodId, setVillagesWithFloorPlans } from './modules/state.js';
+import { getHousesForSale, getNeighborhoodsData, getSelectedNeighborhoodId, setHousesForSale, setNeighborhoodsData, setSelectedNeighborhoodId, setVillagesWithFloorPlans } from './modules/state.js';
 
 const neighborhoodGeojson = await fetchNeighborhoodGeojson()
 
@@ -206,6 +206,7 @@ function initializeFilters() {
 
   const houses = getHousesForSale();
   const enhancedGeojson = getEnhancedGeojson();
+  const neighborhoods = getNeighborhoodsData();
 
   if (!enhancedGeojson) {
     console.error('Cannot initialize filters: Enhanced GeoJSON not available');
@@ -216,9 +217,9 @@ function initializeFilters() {
 
   // Wrapper for applyFilters that provides all necessary dependencies
   const applyFiltersWrapper = () => {
-    applyFiltersModule(map, enhancedGeojson, getSelectedNeighborhoodId, setSelectedNeighborhoodId, closeDetailsPanel, updateFilterUI);
+    applyFiltersModule(map, enhancedGeojson, neighborhoods, getSelectedNeighborhoodId, setSelectedNeighborhoodId, closeDetailsPanel, updateFilterUI);
   };
 
-  // Setup filters with houses data and enhanced GeoJSON
-  setupFilters(enhancedGeojson, houses, applyFiltersWrapper);
+  // Setup filters with houses data, neighborhoods data, and enhanced GeoJSON
+  setupFilters(enhancedGeojson, houses, neighborhoods, applyFiltersWrapper);
 }

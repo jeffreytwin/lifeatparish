@@ -202,7 +202,7 @@ export function getEnhancedGeojson() {
  * @param {Object} geojson - The GeoJSON data
  */
 export function loadNeighborhoodsGeojson(map, geojson) {
-  // Dynamically set new_construction property and use Wix names
+  // Dynamically set new_construction property, use Wix names, and Wix amenities
   enhancedNeighborhoodGeojson = {
     ...geojson,
     features: geojson.features.map(feature => {
@@ -211,12 +211,25 @@ export function loadNeighborhoodsGeojson(map, geojson) {
       const wixName = NEIGHBORHOOD_NAME_MAPPING[originalName] || originalName;
       const hasNew = hasNewConstruction(originalName);
 
+      // Get Wix neighborhood data to extract amenitiesTags
+      const neighborhoodsData = getNeighborhoodsData();
+      const neighborhoodData = neighborhoodsData.find(n => {
+        const title = (n.villageTitle || '').replace(/^Homes for Sale in /i, '');
+        const normalizedTitle = normalizeNeighborhoodName(title);
+        const normalizedSearch = normalizeNeighborhoodName(wixName);
+        return normalizedTitle === normalizedSearch;
+      });
+
+      // Use Wix amenitiesTags if available, otherwise keep original amenities
+      const amenities = neighborhoodData?.amenitiesTags || feature.properties.amenities || [];
+
       return {
         ...feature,
         properties: {
           ...feature.properties,
           neighborhood: wixName, // Use Wix name
-          new_construction: hasNew // Check using original for matching
+          new_construction: hasNew, // Check using original for matching
+          amenities: amenities // Use Wix amenitiesTags
         }
       };
     })

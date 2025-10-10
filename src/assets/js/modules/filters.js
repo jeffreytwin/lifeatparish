@@ -50,14 +50,14 @@ export function populateHomeTypes(houses, applyFiltersCallback) {
 }
 
 /**
- * Populate Amenities Dropdown
- * @param {Object} geojson - The GeoJSON data
+ * Populate Amenities Dropdown from Wix neighborhoods data
+ * @param {Array} neighborhoods - Array of neighborhood objects from Wix
  * @param {Function} applyFiltersCallback - Callback to apply filters
  */
-export function populateAmenities(geojson, applyFiltersCallback) {
+export function populateAmenities(neighborhoods, applyFiltersCallback) {
   const amenitiesSet = new Set();
-  geojson.features.forEach(feature => {
-    const amenities = feature.properties.amenities;
+  neighborhoods.forEach(neighborhood => {
+    const amenities = neighborhood.amenitiesTags;
     if (Array.isArray(amenities)) {
       amenities.forEach(a => amenitiesSet.add(a));
     }
@@ -375,11 +375,11 @@ export function setupForSaleFilter(applyFiltersCallback) {
 
 /**
  * Setup Community Features
- * @param {Function} applyFiltersCallback - Callback to apply filters
+ * Community features filter removed - gated and age55Plus fields don't exist in data
+ * These features can be searched via the amenities filter instead
  */
-export function setupCommunityFeatures(applyFiltersCallback) {
-  // Community features filter removed - gated and age55Plus fields don't exist in data
-  // These features can be searched via the amenities filter instead
+export function setupCommunityFeatures() {
+  // Placeholder for potential future community features
 }
 
 /**
@@ -433,21 +433,13 @@ export function setupClearAll(applyFiltersCallback) {
  * Apply Filters to Map
  * @param {mapboxgl.Map} map - The map instance
  * @param {Object} geojson - The GeoJSON data
+ * @param {Array} neighborhoods - Array of neighborhood objects from Wix
  * @param {Function} getSelectedId - Function to get selected neighborhood ID
  * @param {Function} setSelectedId - Function to set selected neighborhood ID
  * @param {Function} closeDetails - Function to close details panel
  * @param {Function} updateFilterUICallback - Callback to update filter UI
  */
-export function applyFilters(map, geojson, getSelectedId, setSelectedId, closeDetails, updateFilterUICallback) {
-  console.log('🔍 applyFilters called', {
-    priceMin: filterState.priceMin,
-    priceMax: filterState.priceMax,
-    defaultMin: defaultPriceRange.min,
-    defaultMax: defaultPriceRange.max,
-    homeTypes: filterState.homeTypes,
-    bedrooms: filterState.bedrooms,
-    forSale: filterState.forSale
-  });
+export function applyFilters(map, geojson, neighborhoods, getSelectedId, setSelectedId, closeDetails, updateFilterUICallback) {
 
   // Clear selected polygon and close details panel when filtering
   if (getSelectedId() !== null) {
@@ -559,7 +551,6 @@ export function applyFilters(map, geojson, getSelectedId, setSelectedId, closeDe
     const props = feature.properties;
     let matches = true;
     const neighborhoodName = (props.neighborhood || '').toLowerCase();
-    const originalName = props.neighborhood || '';
 
     // Search filter (neighborhood name only)
     if (filterState.search) {
@@ -567,7 +558,7 @@ export function applyFilters(map, geojson, getSelectedId, setSelectedId, closeDe
       matches = matches && name.includes(filterState.search);
     }
 
-    // Amenities filter (neighborhood-level)
+    // Amenities filter (neighborhood-level) - uses Wix amenitiesTags from enhanced GeoJSON
     if (matches && filterState.amenities.length > 0) {
       const propAmenities = props.amenities || [];
       matches = matches && filterState.amenities.every(amenity => propAmenities.includes(amenity));
@@ -708,19 +699,20 @@ export function updateResultsCounter(matchedCount, geojson) {
  * Setup all filters
  * @param {Object} geojson - The GeoJSON data
  * @param {Array} houses - Array of houses for sale
+ * @param {Array} neighborhoods - Array of neighborhood objects from Wix
  * @param {Function} applyFiltersCallback - Callback to apply filters
  */
-export function setupFilters(geojson, houses, applyFiltersCallback) {
+export function setupFilters(geojson, houses, neighborhoods, applyFiltersCallback) {
   // Initialize UI components
   populateHomeTypes(houses, applyFiltersCallback);
-  populateAmenities(geojson, applyFiltersCallback);
+  populateAmenities(neighborhoods, applyFiltersCallback);
   populateBedrooms(applyFiltersCallback);
   populateGarages(applyFiltersCallback);
   setupPriceSlider(houses, applyFiltersCallback);
   setupSearch(applyFiltersCallback);
   setupAmenitiesDropdown();
   setupForSaleFilter(applyFiltersCallback);
-  setupCommunityFeatures(applyFiltersCallback);
+  setupCommunityFeatures();
   setupClearAll(applyFiltersCallback);
 
   // Initial display
