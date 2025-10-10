@@ -171,7 +171,6 @@ map.on('load', () => {
       this.container.style.cssText = 'background: white; padding: 10px; border-radius: 4px; box-shadow: 0 0 0 2px rgba(0,0,0,.1);';
 
       this.container.innerHTML = `
-        <div style="font-weight: 600; font-size: 12px; margin-bottom: 8px; color: #374151;">Neighborhood Type</div>
         <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
           <div style="width: 16px; height: 16px; background: #10b981; border-radius: 3px;"></div>
           <span style="font-size: 12px; color: #374151;">New Construction</span>

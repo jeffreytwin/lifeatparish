@@ -164,6 +164,17 @@ export function showNeighborhoodDetails(neighborhood) {
     headerContainer.className = 'relative';
     headerContainer.style.cssText = 'height: 240px;';
 
+    // Make header clickable if URL is available
+    if (neighborhoodData && neighborhoodData['link-villages-title']) {
+      headerContainer.style.cursor = 'pointer';
+      headerContainer.addEventListener('click', (e) => {
+        // Don't open link if clicking close button
+        if (!e.target.closest('button')) {
+          window.open(`https://www.lifeatparrish.com${neighborhoodData['link-villages-title']}`, '_blank', 'noopener,noreferrer');
+        }
+      });
+    }
+
     // Create image with loader
     // Panel is 400px wide, we need full bleed (extend beyond 2rem padding on each side)
     const { container: imageWrapper } = createImageWithLoader(
@@ -201,14 +212,17 @@ export function showNeighborhoodDetails(neighborhood) {
 
     // Close button on image
     const closeButton = document.createElement('button');
-    closeButton.className = 'absolute top-4 right-4 bg-white bg-opacity-90 hover:bg-opacity-100 rounded-full p-2 transition-all border-0 cursor-pointer';
+    closeButton.className = 'absolute top-4 right-4 bg-white bg-opacity-90 hover:bg-opacity-100 rounded-full p-2 transition-all border-0 cursor-pointer z-10';
     closeButton.innerHTML = `
       <svg class="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
       </svg>
     `;
     closeButton.setAttribute('aria-label', 'Close details panel');
-    closeButton.addEventListener('click', () => closeDetailsPanel());
+    closeButton.addEventListener('click', (e) => {
+      e.stopPropagation(); // Prevent triggering header click
+      closeDetailsPanel();
+    });
     headerContainer.appendChild(closeButton);
 
     headerElement.appendChild(headerContainer);

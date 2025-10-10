@@ -18,6 +18,9 @@ export function populateHomeTypes(houses, applyFiltersCallback) {
   const homeTypesSet = new Set();
   houses.forEach(house => {
     if (house.homeType) {
+      if (house.homeType === 'Single Family Residence') {
+        house.homeType = 'Single Family'
+      }
       homeTypesSet.add(house.homeType);
     }
   });
