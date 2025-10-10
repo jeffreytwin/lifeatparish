@@ -3,7 +3,7 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 import { fetchFloorPlans, fetchHousesForSale, fetchNeighborhoods } from './modules/api.js';
 import { closeDetailsPanel, initDetailsPanel, showNeighborhoodDetails } from './modules/details-panel.js';
 import { applyFilters as applyFiltersModule, setupFilters, updateFilterUI } from './modules/filters.js';
-import { createPopup, fetchNeighborhoodGeojson, fitMapToAllNeighborhoods, loadNeighborhoodsGeojson, setupMapInteractions } from './modules/map.js';
+import { createPopup, fetchNeighborhoodGeojson, fitMapToAllNeighborhoods, getEnhancedGeojson, loadNeighborhoodsGeojson, setupMapInteractions } from './modules/map.js';
 import { getHousesForSale, getSelectedNeighborhoodId, setHousesForSale, setNeighborhoodsData, setSelectedNeighborhoodId, setVillagesWithFloorPlans } from './modules/state.js';
 
 const neighborhoodGeojson = await fetchNeighborhoodGeojson()
@@ -162,18 +162,63 @@ map.on('load', () => {
 
   map.addControl(new FitBoundsControl(), 'bottom-right');
 
+  // Create custom legend control
+  class LegendControl {
+    onAdd(map) {
+      this.map = map;
+      this.container = document.createElement('div');
+      this.container.className = 'mapboxgl-ctrl';
+      this.container.style.cssText = 'background: white; padding: 10px; border-radius: 4px; box-shadow: 0 0 0 2px rgba(0,0,0,.1);';
+
+      this.container.innerHTML = `
+        <div style="font-weight: 600; font-size: 12px; margin-bottom: 8px; color: #374151;">Neighborhood Type</div>
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+          <div style="width: 16px; height: 16px; background: #10b981; border-radius: 3px;"></div>
+          <span style="font-size: 12px; color: #374151;">New Construction</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <div style="width: 16px; height: 16px; background: #676ACE; border-radius: 3px;"></div>
+          <span style="font-size: 12px; color: #374151;">Resale Homes</span>
+        </div>
+      `;
+
+      return this.container;
+    }
+
+    onRemove() {
+      this.container.parentNode.removeChild(this.container);
+      this.map = undefined;
+    }
+  }
+
+  map.addControl(new LegendControl(), 'bottom-left');
+
   // Initialize map layers once floor plans and neighborhoods are loaded
   initializeMapIfReady();
 });
 
+let filtersInitialized = false;
+
 function initializeFilters() {
+  if (filtersInitialized) {
+    return;
+  }
+
   const houses = getHousesForSale();
+  const enhancedGeojson = getEnhancedGeojson();
+
+  if (!enhancedGeojson) {
+    console.error('Cannot initialize filters: Enhanced GeoJSON not available');
+    return;
+  }
+
+  filtersInitialized = true;
 
   // Wrapper for applyFilters that provides all necessary dependencies
   const applyFiltersWrapper = () => {
-    applyFiltersModule(map, neighborhoodGeojson, getSelectedNeighborhoodId, setSelectedNeighborhoodId, closeDetailsPanel, updateFilterUI);
+    applyFiltersModule(map, enhancedGeojson, getSelectedNeighborhoodId, setSelectedNeighborhoodId, closeDetailsPanel, updateFilterUI);
   };
 
-  // Setup filters with houses data
-  setupFilters(neighborhoodGeojson, houses, applyFiltersWrapper);
+  // Setup filters with houses data and enhanced GeoJSON
+  setupFilters(enhancedGeojson, houses, applyFiltersWrapper);
 }

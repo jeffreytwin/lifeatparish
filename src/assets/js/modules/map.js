@@ -185,6 +185,17 @@ export function fitMapToAllNeighborhoods(map, geojson) {
   });
 }
 
+// Store the enhanced GeoJSON for use by filters
+let enhancedNeighborhoodGeojson = null;
+
+/**
+ * Get the enhanced GeoJSON data (with dynamic new_construction values)
+ * @returns {Object|null} Enhanced GeoJSON or null if not yet loaded
+ */
+export function getEnhancedGeojson() {
+  return enhancedNeighborhoodGeojson;
+}
+
 /**
  * Load GeoJSON data and add map layers
  * @param {mapboxgl.Map} map - The map instance
@@ -192,19 +203,20 @@ export function fitMapToAllNeighborhoods(map, geojson) {
  */
 export function loadNeighborhoodsGeojson(map, geojson) {
   // Dynamically set new_construction property and use Wix names
-  const enhancedGeojson = {
+  enhancedNeighborhoodGeojson = {
     ...geojson,
     features: geojson.features.map(feature => {
       const originalName = feature.properties.neighborhood;
       // Use mapped Wix name if available, otherwise keep original
       const wixName = NEIGHBORHOOD_NAME_MAPPING[originalName] || originalName;
+      const hasNew = hasNewConstruction(originalName);
 
       return {
         ...feature,
         properties: {
           ...feature.properties,
           neighborhood: wixName, // Use Wix name
-          new_construction: hasNewConstruction(originalName) // Check using original for matching
+          new_construction: hasNew // Check using original for matching
         }
       };
     })
@@ -213,7 +225,7 @@ export function loadNeighborhoodsGeojson(map, geojson) {
   // add the polygons
   map.addSource('neighborhoods', {
     type: 'geojson',
-    data: enhancedGeojson,
+    data: enhancedNeighborhoodGeojson,
     generateId: true // Generate IDs for features automatically
   });
 

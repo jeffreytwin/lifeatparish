@@ -559,6 +559,7 @@ export function applyFilters(map, geojson, getSelectedId, setSelectedId, closeDe
     const props = feature.properties;
     let matches = true;
     const neighborhoodName = (props.neighborhood || '').toLowerCase();
+    const originalName = props.neighborhood || '';
 
     // Search filter (neighborhood name only)
     if (filterState.search) {
