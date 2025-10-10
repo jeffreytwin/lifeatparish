@@ -2,7 +2,7 @@
  * Details Panel Management
  */
 
-import { convertWixImageUrl, createImageWithLoader, unfadeAllFeatures } from './map.js';
+import { convertWixImageUrl, createImageWithLoader, hasNewConstruction, unfadeAllFeatures } from './map.js';
 import { defaultPriceRange, filterState, getHousesForSale, getNeighborhoodsData } from './state.js';
 
 let map = null;
@@ -92,9 +92,9 @@ export function showNeighborhoodDetails(neighborhood) {
   // Find matching neighborhood data from Wix
   const neighborhoodData = findNeighborhoodData(neighborhood.neighborhood);
 
-  // Get color theme based on new_construction
-  const isNewConstruction = neighborhood.new_construction === true;
-  const themeColor = isNewConstruction ? '#676ACE' : '#4AC2A9';
+  // Get color theme based on new_construction (dynamically checked)
+  const isNewConstruction = hasNewConstruction(neighborhood.neighborhood);
+  const themeColor = isNewConstruction ? '#10b981' : '#676ACE'; // Green for new construction, purple for resale
 
   // Get elements
   const detailsContent = document.querySelector('.details-content');
@@ -136,7 +136,7 @@ export function showNeighborhoodDetails(neighborhood) {
     if (isNewConstruction) {
       const badge = document.createElement('div');
       badge.className = 'absolute top-4 left-4 text-white px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide shadow-lg flex items-center gap-1';
-      badge.style.backgroundColor = '#676ACE';
+      badge.style.backgroundColor = '#10b981'; // Green for new construction
       badge.innerHTML = `
         New Construction
       `;

@@ -1,10 +1,10 @@
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
-import { fetchHousesForSale, fetchNeighborhoods } from './modules/api.js';
+import { fetchFloorPlans, fetchHousesForSale, fetchNeighborhoods } from './modules/api.js';
 import { closeDetailsPanel, initDetailsPanel, showNeighborhoodDetails } from './modules/details-panel.js';
 import { applyFilters as applyFiltersModule, setupFilters, updateFilterUI } from './modules/filters.js';
 import { createPopup, fetchNeighborhoodGeojson, fitMapToAllNeighborhoods, loadNeighborhoodsGeojson, setupMapInteractions } from './modules/map.js';
-import { getHousesForSale, getSelectedNeighborhoodId, setHousesForSale, setSelectedNeighborhoodId, setNeighborhoodsData } from './modules/state.js';
+import { getHousesForSale, getSelectedNeighborhoodId, setHousesForSale, setNeighborhoodsData, setSelectedNeighborhoodId, setVillagesWithFloorPlans } from './modules/state.js';
 
 const neighborhoodGeojson = await fetchNeighborhoodGeojson()
 
@@ -18,13 +18,75 @@ const map = new mapboxgl.Map({
   zoom: 7
 });
 
+// Track when critical data is loaded
+let floorPlansLoaded = false;
+let neighborhoodsLoaded = false;
+let mapLoaded = false;
+
+// Function to initialize map layers once all data is ready
+function initializeMapIfReady() {
+  if (floorPlansLoaded && neighborhoodsLoaded && mapLoaded) {
+    // Add your GeoJSON polygons and layers
+    loadNeighborhoodsGeojson(map, neighborhoodGeojson);
+
+    // Create a reusable popup instance
+    const popup = createPopup();
+
+    // Setup map interactions
+    setupMapInteractions(
+      map,
+      popup,
+      getSelectedNeighborhoodId,
+      setSelectedNeighborhoodId,
+      showNeighborhoodDetails,
+      closeDetailsPanel
+    );
+
+    // Setup details panel
+    initDetailsPanel(map);
+
+    // Initialize filters if houses are already loaded
+    const houses = getHousesForSale();
+    if (houses.length > 0) {
+      initializeFilters();
+
+      // Hide loading overlay since houses are already loaded
+      const loadingOverlay = document.getElementById('sidebar-loading');
+      if (loadingOverlay) {
+        loadingOverlay.classList.add('hidden');
+      }
+    }
+
+    // Fit map to all neighborhoods on initial load
+    fitMapToAllNeighborhoods(map, neighborhoodGeojson);
+  }
+}
+
 // Fetch and store neighborhoods data
 fetchNeighborhoods().then(neighborhoods => {
   setNeighborhoodsData(neighborhoods || []);
   console.log(`Loaded ${neighborhoods?.length || 0} neighborhoods from Wix`);
+  neighborhoodsLoaded = true;
+  initializeMapIfReady();
 }).catch(error => {
   console.error('Error fetching neighborhoods:', error);
   setNeighborhoodsData([]);
+  neighborhoodsLoaded = true;
+  initializeMapIfReady();
+});
+
+// Fetch floor plans to determine which neighborhoods have new construction
+// This MUST complete before loading map layers
+fetchFloorPlans().then(villagesSet => {
+  setVillagesWithFloorPlans(villagesSet);
+  console.log(`Loaded ${villagesSet.size} neighborhoods with new construction`);
+  floorPlansLoaded = true;
+  initializeMapIfReady();
+}).catch(error => {
+  console.error('Error fetching floor plans:', error);
+  setVillagesWithFloorPlans(new Set());
+  floorPlansLoaded = true;
+  initializeMapIfReady();
 });
 
 // Fetch houses and store in state
@@ -55,24 +117,7 @@ fetchHousesForSale().then(houses => {
 });
 
 map.on('load', () => {
-  // Add your GeoJSON polygons and layers
-  loadNeighborhoodsGeojson(map, neighborhoodGeojson);
-
-  // Create a reusable popup instance
-  const popup = createPopup();
-
-  // Setup map interactions
-  setupMapInteractions(
-    map,
-    popup,
-    getSelectedNeighborhoodId,
-    setSelectedNeighborhoodId,
-    showNeighborhoodDetails,
-    closeDetailsPanel
-  );
-
-  // Setup details panel
-  initDetailsPanel(map);
+  mapLoaded = true;
 
   // Add zoom controls
   map.addControl(new mapboxgl.NavigationControl({
@@ -117,20 +162,8 @@ map.on('load', () => {
 
   map.addControl(new FitBoundsControl(), 'bottom-right');
 
-  // Initialize filters if houses are already loaded
-  const houses = getHousesForSale();
-  if (houses.length > 0) {
-    initializeFilters();
-
-    // Hide loading overlay since houses are already loaded
-    const loadingOverlay = document.getElementById('sidebar-loading');
-    if (loadingOverlay) {
-      loadingOverlay.classList.add('hidden');
-    }
-  }
-
-  // Fit map to all neighborhoods on initial load
-  fitMapToAllNeighborhoods(map, neighborhoodGeojson);
+  // Initialize map layers once floor plans and neighborhoods are loaded
+  initializeMapIfReady();
 });
 
 function initializeFilters() {

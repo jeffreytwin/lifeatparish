@@ -3,7 +3,7 @@
  */
 
 import mapboxgl from 'mapbox-gl';
-import { getNeighborhoodsData } from './state.js';
+import { getNeighborhoodsData, getVillagesWithFloorPlans } from './state.js';
 
 /**
  * Fetch neighborhood GeoJSON data
@@ -41,6 +41,24 @@ function findNeighborhoodData(neighborhoodName) {
     const normalizedTitle = normalizeNeighborhoodName(title);
     return normalizedTitle === normalizedSearch;
   }) || null;
+}
+
+/**
+ * Check if a neighborhood has new construction (has floor plans)
+ * @param {string} neighborhoodName - Name from GeoJSON
+ * @returns {boolean} True if neighborhood has new construction available
+ */
+export function hasNewConstruction(neighborhoodName) {
+  // Find the matching Wix neighborhood data
+  const neighborhoodData = findNeighborhoodData(neighborhoodName);
+
+  if (!neighborhoodData || !neighborhoodData._id) {
+    return false;
+  }
+
+  // Check if this neighborhood's ID exists in the floor plans Set
+  const villagesWithFloorPlans = getVillagesWithFloorPlans();
+  return villagesWithFloorPlans.has(neighborhoodData._id);
 }
 
 /**
@@ -159,10 +177,22 @@ export function fitMapToAllNeighborhoods(map, geojson) {
  * @param {Object} geojson - The GeoJSON data
  */
 export function loadNeighborhoodsGeojson(map, geojson) {
+  // Dynamically set new_construction property based on floor plans data
+  const enhancedGeojson = {
+    ...geojson,
+    features: geojson.features.map(feature => ({
+      ...feature,
+      properties: {
+        ...feature.properties,
+        new_construction: hasNewConstruction(feature.properties.neighborhood)
+      }
+    }))
+  };
+
   // add the polygons
   map.addSource('neighborhoods', {
     type: 'geojson',
-    data: geojson,
+    data: enhancedGeojson,
     generateId: true // Generate IDs for features automatically
   });
 
@@ -175,8 +205,8 @@ export function loadNeighborhoodsGeojson(map, geojson) {
       'fill-color': [
         'case',
         ['==', ['get', 'new_construction'], true],
-        '#676ACE', // New construction - purple
-        '#4AC2A9'  // Not new construction - teal (default for false or null)
+        '#10b981', // New construction - green
+        '#676ACE'  // Resale homes - purple (default for false or null)
       ],
       'fill-opacity': [
         'case',
@@ -200,8 +230,8 @@ export function loadNeighborhoodsGeojson(map, geojson) {
       'line-color': [
         'case',
         ['==', ['get', 'new_construction'], true],
-        '#676ACE', // New construction - purple
-        '#4AC2A9'  // Not new construction - teal (default for false or null)
+        '#10b981', // New construction - green
+        '#676ACE'  // Resale homes - purple (default for false or null)
       ],
       'line-width': 2,
       'line-opacity': [
@@ -308,9 +338,9 @@ export function setupMapInteractions(map, popup, getSelectedId, setSelectedId, s
       const properties = e.features[0].properties;
       const coordinates = e.lngLat;
 
-      // Determine color based on new_construction status
-      const isNewConstruction = properties.new_construction === true;
-      const themeColor = isNewConstruction ? '#676ACE' : '#4AC2A9';
+      // Determine color based on new_construction status (dynamically checked)
+      const isNewConstruction = hasNewConstruction(properties.neighborhood);
+      const themeColor = isNewConstruction ? '#10b981' : '#676ACE'; // Green for new construction, purple for resale
 
       // Find matching neighborhood data
       const neighborhoodData = findNeighborhoodData(properties.neighborhood);
@@ -341,7 +371,7 @@ export function setupMapInteractions(map, popup, getSelectedId, setSelectedId, s
         // Add New Construction badge if applicable
         if (isNewConstruction) {
           const badge = document.createElement('div');
-          badge.style.cssText = 'position: absolute; top: 0.75rem; left: 0.75rem; background: #676ACE; color: white; padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.625rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.025em; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);';
+          badge.style.cssText = 'position: absolute; top: 0.75rem; left: 0.75rem; background: #10b981; color: white; padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.625rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.025em; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);';
           badge.textContent = 'New Construction';
           imageWrapper.appendChild(badge);
         }

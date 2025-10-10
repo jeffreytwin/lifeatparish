@@ -80,3 +80,47 @@ export async function fetchNeighborhoods() {
   console.log('items', result);
   return result.items;
 }
+
+/**
+ * Fetch all floor plans and return a Set of village IDs that have floor plans
+ * This determines which neighborhoods have new construction available
+ * @returns {Promise<Set<string>>} Set of village IDs with floor plans
+ */
+export async function fetchFloorPlans() {
+  let allFloorPlans = [];
+  let pageCount = 0;
+
+  console.log('Fetching floor plans with pagination...');
+
+  // Get first page - only fetch the 'villages' field we need
+  let result = await wixClient.items
+    .query('FloorPlans')
+    .fields('villages')
+    .limit(300)
+    .find();
+
+  pageCount++;
+  console.log(`Page ${pageCount}: Fetched ${result.items.length} floor plans`);
+  allFloorPlans = allFloorPlans.concat(result.items);
+
+  // Fetch remaining pages
+  while (result.hasNext()) {
+    result = await result.next();
+    pageCount++;
+    console.log(`Page ${pageCount}: Fetched ${result.items.length} floor plans`);
+    allFloorPlans = allFloorPlans.concat(result.items);
+  }
+
+  console.log(`✓ Fetched all floor plans: ${allFloorPlans.length} total (${pageCount} pages)`);
+
+  // Create a Set of unique village IDs that have floor plans
+  const villagesWithFloorPlans = new Set(
+    allFloorPlans
+      .map(fp => fp.villages)
+      .filter(id => id) // Filter out null/undefined
+  );
+
+  console.log(`✓ Found ${villagesWithFloorPlans.size} neighborhoods with floor plans (new construction)`);
+
+  return villagesWithFloorPlans;
+}

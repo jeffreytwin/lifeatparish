@@ -95,3 +95,25 @@ export function getNeighborhoodsData() {
 export function setNeighborhoodsData(neighborhoods) {
   neighborhoodsData = neighborhoods;
 }
+
+/**
+ * Floor plans data storage (Set of village IDs with floor plans)
+ * Used to determine which neighborhoods have new construction
+ */
+let villagesWithFloorPlans = new Set();
+
+/**
+ * Get villages with floor plans
+ * @returns {Set<string>} Set of village IDs that have floor plans
+ */
+export function getVillagesWithFloorPlans() {
+  return villagesWithFloorPlans;
+}
+
+/**
+ * Set villages with floor plans
+ * @param {Set<string>} villages - Set of village IDs
+ */
+export function setVillagesWithFloorPlans(villages) {
+  villagesWithFloorPlans = villages;
+}
