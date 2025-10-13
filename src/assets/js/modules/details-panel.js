@@ -166,12 +166,16 @@ export function showNeighborhoodDetails(neighborhood) {
     headerContainer.style.cssText = 'height: 240px;';
 
     // Make header clickable if URL is available
-    if (neighborhoodData && neighborhoodData['link-villages-title']) {
+    const rawNeighborhoodUrl = neighborhoodData && (neighborhoodData.neighborhoodHomesForSale || neighborhoodData['neighborhood-homes-for-sale'] || neighborhoodData['link-villages-title']);
+    if (rawNeighborhoodUrl) {
+      // Ensure URL starts with base domain
+      const neighborhoodUrl = rawNeighborhoodUrl.startsWith('http') ? rawNeighborhoodUrl : `https://www.lifeatparrish.com${rawNeighborhoodUrl.startsWith('/') ? rawNeighborhoodUrl : '/' + rawNeighborhoodUrl}`;
+
       headerContainer.style.cursor = 'pointer';
       headerContainer.addEventListener('click', (e) => {
         // Don't open link if clicking close button
         if (!e.target.closest('button')) {
-          window.open(`https://www.lifeatparrish.com${neighborhoodData['link-villages-title']}`, '_blank', 'noopener,noreferrer');
+          window.open(neighborhoodUrl, '_blank', 'noopener,noreferrer');
         }
       });
     }
@@ -286,15 +290,15 @@ export function showNeighborhoodDetails(neighborhood) {
     specsGrid.className = 'grid grid-cols-2 gap-2';
 
     // Home Types
-    if (neighborhoodData.bathroomRange) {
-      const bathroomItem = document.createElement('div');
-      bathroomItem.className = 'flex flex-col items-center text-center';
-      bathroomItem.innerHTML = `
-        <img loading="lazy" sizes="37px" srcset="https://static.wixstatic.com/media/d0be81_82d4b4e3840145d5b4cc09b0b3d52749~mv2.png/v1/fill/w_37,h_34,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/Shower%20Icon%20-%20Teal.png 1x, https://static.wixstatic.com/media/d0be81_82d4b4e3840145d5b4cc09b0b3d52749~mv2.png/v1/fill/w_74,h_68,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/Shower%20Icon%20-%20Teal.png 2x" id="img_comp-kpf34lrb__a1d14dd0-0470-468a-915b-7835e90bb0c6" src="https://static.wixstatic.com/media/d0be81_82d4b4e3840145d5b4cc09b0b3d52749~mv2.png/v1/fill/w_37,h_34,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/Shower%20Icon%20-%20Teal.png" alt="Bathrooms" class="w-8 h-8 object-contain" />
+    if (neighborhoodData.homeTypes) {
+      const homeTypesItem = document.createElement('div');
+      homeTypesItem.className = 'flex flex-col items-center text-center';
+      homeTypesItem.innerHTML = `
+        <img loading="lazy" src="/House Icon - Teal.png" alt="Home Types" class="w-8 h-8 object-contain" />
         <span class="text-sm font-semibold" style="color: #4AC2A9;">Home Types</span>
         <span class="text-xs text-gray-700">${neighborhoodData.homeTypes}</span>
       `;
-      specsGrid.appendChild(bathroomItem);
+      specsGrid.appendChild(homeTypesItem);
     }
 
     // Bedrooms
@@ -327,7 +331,7 @@ export function showNeighborhoodDetails(neighborhood) {
       const sqftItem = document.createElement('div');
       sqftItem.className = 'flex flex-col items-center text-center';
       sqftItem.innerHTML = `
-        <img loading="lazy" sizes="51px" srcset="https://static.wixstatic.com/media/d0be81_7cf193b58f5846f6a425af5b2e9c5109~mv2.png/v1/crop/x_27,y_0,w_904,h_957/fill/w_51,h_54,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/House%20Icon%20-%20Teal.png 1x, https://static.wixstatic.com/media/d0be81_7cf193b58f5846f6a425af5b2e9c5109~mv2.png/v1/crop/x_27,y_0,w_904,h_957/fill/w_102,h_108,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/House%20Icon%20-%20Teal.png 2x"  src="https://static.wixstatic.com/media/d0be81_7cf193b58f5846f6a425af5b2e9c5109~mv2.png/v1/crop/x_27,y_0,w_904,h_957/fill/w_51,h_54,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/House%20Icon%20-%20Teal.png" alt="Size" class="w-8 h-8 object-contain" />
+        <img loading="lazy" src="/Measurement Icon - Teal.png" alt="Square Feet" class="w-8 h-8 object-contain" />
         <span class="text-sm font-semibold" style="color: #4AC2A9;">Square Feet</span>
         <span class="text-xs text-gray-700">${neighborhoodData.squareFeet}</span>
       `;
@@ -418,7 +422,13 @@ export function showNeighborhoodDetails(neighborhood) {
   }
 
   // === ACTION BUTTONS (Fixed at bottom of panel) ===
-  if (neighborhoodData && neighborhoodData['link-villages-title']) {
+  // Get neighborhood URL from various possible field names
+  const rawNeighborhoodPageUrl = neighborhoodData && (neighborhoodData.neighborhoodHomesForSale || neighborhoodData['neighborhood-homes-for-sale'] || neighborhoodData['link-villages-title']);
+
+  if (rawNeighborhoodPageUrl) {
+    // Ensure URL starts with base domain
+    const neighborhoodPageUrl = rawNeighborhoodPageUrl.startsWith('http') ? rawNeighborhoodPageUrl : `https://www.lifeatparrish.com${rawNeighborhoodPageUrl.startsWith('/') ? rawNeighborhoodPageUrl : '/' + rawNeighborhoodPageUrl}`;
+
     // Remove any existing button container
     const existingButton = panel.querySelector('.explore-button-container');
     if (existingButton) {
@@ -448,7 +458,7 @@ export function showNeighborhoodDetails(neighborhood) {
 
       // See Floor Plans button
       const floorPlansButton = document.createElement('a');
-      floorPlansButton.href = `https://www.lifeatparrish.com${neighborhoodData['link-villages-title']}#floor-plans`;
+      floorPlansButton.href = neighborhoodPageUrl;
       floorPlansButton.target = '_blank';
       floorPlansButton.rel = 'noopener noreferrer';
       floorPlansButton.className = 'block w-full text-center py-3 px-6 rounded-lg font-bold text-white transition-all duration-200 shadow-lg hover:shadow-xl';
@@ -463,7 +473,7 @@ export function showNeighborhoodDetails(neighborhood) {
 
       // See Homes for Sale button
       const homesButton = document.createElement('a');
-      homesButton.href = `https://www.lifeatparrish.com${neighborhoodData['link-villages-title']}#homes-for-sale`;
+      homesButton.href = neighborhoodPageUrl;
       homesButton.target = '_blank';
       homesButton.rel = 'noopener noreferrer';
       homesButton.className = 'block w-full text-center py-3 px-6 rounded-lg font-bold text-white transition-all duration-200 shadow-lg hover:shadow-xl';
@@ -478,7 +488,7 @@ export function showNeighborhoodDetails(neighborhood) {
     } else if (hasFloorPlans) {
       // Only floor plans - single button
       const floorPlansButton = document.createElement('a');
-      floorPlansButton.href = `https://www.lifeatparrish.com${neighborhoodData['link-villages-title']}#floor-plans`;
+      floorPlansButton.href = neighborhoodPageUrl;
       floorPlansButton.target = '_blank';
       floorPlansButton.rel = 'noopener noreferrer';
       floorPlansButton.className = 'block w-full text-center py-3 px-6 rounded-lg font-bold text-white transition-all duration-200 shadow-lg hover:shadow-xl';
@@ -493,7 +503,7 @@ export function showNeighborhoodDetails(neighborhood) {
     } else if (hasHomesForSale) {
       // Only homes for sale - single button
       const homesButton = document.createElement('a');
-      homesButton.href = `https://www.lifeatparrish.com${neighborhoodData['link-villages-title']}#homes-for-sale`;
+      homesButton.href = neighborhoodPageUrl;
       homesButton.target = '_blank';
       homesButton.rel = 'noopener noreferrer';
       homesButton.className = 'block w-full text-center py-3 px-6 rounded-lg font-bold text-white transition-all duration-200 shadow-lg hover:shadow-xl';
@@ -508,7 +518,7 @@ export function showNeighborhoodDetails(neighborhood) {
     } else {
       // Neither - show generic explore button
       const exploreButton = document.createElement('a');
-      exploreButton.href = `https://www.lifeatparrish.com${neighborhoodData['link-villages-title']}`;
+      exploreButton.href = neighborhoodPageUrl;
       exploreButton.target = '_blank';
       exploreButton.rel = 'noopener noreferrer';
       exploreButton.className = 'block w-full text-center py-3 px-6 rounded-lg font-bold text-white transition-all duration-200 shadow-lg hover:shadow-xl';
