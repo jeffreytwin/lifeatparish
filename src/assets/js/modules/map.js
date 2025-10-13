@@ -6,11 +6,11 @@ import mapboxgl from 'mapbox-gl';
 import { getHousesForSale, getNeighborhoodsData, getVillagesWithFloorPlans } from './state.js';
 
 /**
- * Fetch neighborhood GeoJSON data
+ * Fetch neighborhood GeoJSON data from Wix
  * @returns {Promise<Object>} GeoJSON data
  */
 export async function fetchNeighborhoodGeojson() {
-  const response = await fetch('neighborhoods.geojson');
+  const response = await fetch('https://d4ab3c8b-a6bd-41c2-be01-9df7d7d13631.usrfiles.com/ugd/d4ab3c_2ee50ed343dc4840ad74e76c82c08883.json');
   const neighborhoodData = await response.json();
   return neighborhoodData;
 }
