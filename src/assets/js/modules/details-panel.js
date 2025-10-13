@@ -3,6 +3,7 @@
  */
 
 import { convertWixImageUrl, createImageWithLoader, hasNewConstruction, unfadeAllFeatures } from './map.js';
+import { normalizeHomeType } from './filters.js';
 import { defaultPriceRange, filterState, getHousesForSale, getNeighborhoodsData } from './state.js';
 
 let map = null;
@@ -416,31 +417,111 @@ export function showNeighborhoodDetails(neighborhood) {
     contentElement.appendChild(amenitiesSection);
   }
 
-  // === EXPLORE BUTTON (Fixed at bottom of panel) ===
+  // === ACTION BUTTONS (Fixed at bottom of panel) ===
   if (neighborhoodData && neighborhoodData['link-villages-title']) {
-    // Remove any existing button
+    // Remove any existing button container
     const existingButton = panel.querySelector('.explore-button-container');
     if (existingButton) {
       existingButton.remove();
     }
 
+    // Check if neighborhood has floor plans (new construction)
+    const hasFloorPlans = isNewConstruction;
+
+    // Check if neighborhood has homes for sale
+    const neighborhoodHouses = getHousesForSale().filter(house => {
+      const houseVillage = house.village || '';
+      return normalizeNeighborhoodName(houseVillage) === normalizeNeighborhoodName(neighborhood.neighborhood);
+    });
+    const hasHomesForSale = neighborhoodHouses.length > 0;
+
     const buttonContainer = document.createElement('div');
     buttonContainer.className = 'explore-button-container p-4 bg-white border-t-2 border-gray-200';
     buttonContainer.style.cssText = 'box-shadow: 0 -4px 6px -1px rgba(0, 0, 0, 0.1);';
 
-    const exploreButton = document.createElement('a');
-    exploreButton.href = `https://www.lifeatparrish.com${neighborhoodData['link-villages-title']}`;
-    exploreButton.target = '_blank';
-    exploreButton.rel = 'noopener noreferrer';
-    exploreButton.className = 'block w-full text-center py-3 px-6 rounded-lg font-bold text-white transition-all duration-200 shadow-lg hover:shadow-xl';
-    exploreButton.style.cssText = `background: linear-gradient(135deg, ${themeColor} 0%, ${isNewConstruction ? '#5558b8' : '#3da894'} 100%);`;
-    exploreButton.innerHTML = `
-      Explore ${neighborhood.neighborhood}
-      <svg style="display: inline-block; width: 1.25rem; height: 1.25rem; margin-left: 0.5rem; vertical-align: middle;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
-      </svg>
-    `;
-    buttonContainer.appendChild(exploreButton);
+    // Determine which buttons to show
+    if (hasFloorPlans && hasHomesForSale) {
+      // Show both buttons - stacked vertically
+      buttonContainer.style.display = 'flex';
+      buttonContainer.style.flexDirection = 'column';
+      buttonContainer.style.gap = '0.75rem';
+
+      // See Floor Plans button
+      const floorPlansButton = document.createElement('a');
+      floorPlansButton.href = `https://www.lifeatparrish.com${neighborhoodData['link-villages-title']}#floor-plans`;
+      floorPlansButton.target = '_blank';
+      floorPlansButton.rel = 'noopener noreferrer';
+      floorPlansButton.className = 'block w-full text-center py-3 px-6 rounded-lg font-bold text-white transition-all duration-200 shadow-lg hover:shadow-xl';
+      floorPlansButton.style.cssText = 'background: linear-gradient(135deg, #10b981 0%, #059669 100%);';
+      floorPlansButton.innerHTML = `
+        See Floor Plans
+        <svg style="display: inline-block; width: 1.25rem; height: 1.25rem; margin-left: 0.5rem; vertical-align: middle;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+        </svg>
+      `;
+      buttonContainer.appendChild(floorPlansButton);
+
+      // See Homes for Sale button
+      const homesButton = document.createElement('a');
+      homesButton.href = `https://www.lifeatparrish.com${neighborhoodData['link-villages-title']}#homes-for-sale`;
+      homesButton.target = '_blank';
+      homesButton.rel = 'noopener noreferrer';
+      homesButton.className = 'block w-full text-center py-3 px-6 rounded-lg font-bold text-white transition-all duration-200 shadow-lg hover:shadow-xl';
+      homesButton.style.cssText = 'background: linear-gradient(135deg, #676ACE 0%, #5558b8 100%);';
+      homesButton.innerHTML = `
+        See Homes for Sale
+        <svg style="display: inline-block; width: 1.25rem; height: 1.25rem; margin-left: 0.5rem; vertical-align: middle;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+        </svg>
+      `;
+      buttonContainer.appendChild(homesButton);
+    } else if (hasFloorPlans) {
+      // Only floor plans - single button
+      const floorPlansButton = document.createElement('a');
+      floorPlansButton.href = `https://www.lifeatparrish.com${neighborhoodData['link-villages-title']}#floor-plans`;
+      floorPlansButton.target = '_blank';
+      floorPlansButton.rel = 'noopener noreferrer';
+      floorPlansButton.className = 'block w-full text-center py-3 px-6 rounded-lg font-bold text-white transition-all duration-200 shadow-lg hover:shadow-xl';
+      floorPlansButton.style.cssText = 'background: linear-gradient(135deg, #10b981 0%, #059669 100%);';
+      floorPlansButton.innerHTML = `
+        See Floor Plans
+        <svg style="display: inline-block; width: 1.25rem; height: 1.25rem; margin-left: 0.5rem; vertical-align: middle;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+        </svg>
+      `;
+      buttonContainer.appendChild(floorPlansButton);
+    } else if (hasHomesForSale) {
+      // Only homes for sale - single button
+      const homesButton = document.createElement('a');
+      homesButton.href = `https://www.lifeatparrish.com${neighborhoodData['link-villages-title']}#homes-for-sale`;
+      homesButton.target = '_blank';
+      homesButton.rel = 'noopener noreferrer';
+      homesButton.className = 'block w-full text-center py-3 px-6 rounded-lg font-bold text-white transition-all duration-200 shadow-lg hover:shadow-xl';
+      homesButton.style.cssText = 'background: linear-gradient(135deg, #676ACE 0%, #5558b8 100%);';
+      homesButton.innerHTML = `
+        See Homes for Sale
+        <svg style="display: inline-block; width: 1.25rem; height: 1.25rem; margin-left: 0.5rem; vertical-align: middle;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+        </svg>
+      `;
+      buttonContainer.appendChild(homesButton);
+    } else {
+      // Neither - show generic explore button
+      const exploreButton = document.createElement('a');
+      exploreButton.href = `https://www.lifeatparrish.com${neighborhoodData['link-villages-title']}`;
+      exploreButton.target = '_blank';
+      exploreButton.rel = 'noopener noreferrer';
+      exploreButton.className = 'block w-full text-center py-3 px-6 rounded-lg font-bold text-white transition-all duration-200 shadow-lg hover:shadow-xl';
+      exploreButton.style.cssText = `background: linear-gradient(135deg, ${themeColor} 0%, ${isNewConstruction ? '#5558b8' : '#3da894'} 100%);`;
+      exploreButton.innerHTML = `
+        Explore ${neighborhood.neighborhood}
+        <svg style="display: inline-block; width: 1.25rem; height: 1.25rem; margin-left: 0.5rem; vertical-align: middle;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+        </svg>
+      `;
+      buttonContainer.appendChild(exploreButton);
+    }
+
     panel.appendChild(buttonContainer);
   }
 
@@ -504,6 +585,12 @@ function filterHousesByNeighborhood(neighborhoodName) {
     const houseVillage = house.village || '';
     if (houseVillage.toLowerCase() !== neighborhoodName.toLowerCase()) return false;
 
+    // Apply home type filter
+    if (filterState.homeTypes.length > 0) {
+      const normalizedHouseType = normalizeHomeType(house.homeType);
+      if (!filterState.homeTypes.includes(normalizedHouseType)) return false;
+    }
+
     // Apply bedroom filter (updated ranges: 1-2, 3-4, 5+)
     if (filterState.bedrooms.length > 0) {
       const houseBeds = house.bedrooms || 0;
@@ -523,7 +610,6 @@ function filterHousesByNeighborhood(neighborhoodName) {
       const matchesGarages = filterState.garages.some(range => {
         if (range === '1-2') return garageCount >= 1 && garageCount <= 2;
         if (range === '3-4') return garageCount >= 3 && garageCount <= 4;
-        if (range === '5+') return garageCount >= 5;
         return false;
       });
       if (!matchesGarages) return false;

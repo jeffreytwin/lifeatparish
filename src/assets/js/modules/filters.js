@@ -6,6 +6,36 @@ import mapboxgl from 'mapbox-gl';
 import { defaultPriceRange, filterState, getHousesForSale, setDefaultPriceRange } from './state.js';
 import { debounce, formatPrice } from './utils.js';
 
+// ========== HOME TYPE NORMALIZATION ==========
+
+/**
+ * Normalize home type strings to consolidate synonyms
+ * @param {string} homeType - The raw home type string
+ * @returns {string} Normalized home type
+ */
+export function normalizeHomeType(homeType) {
+  if (!homeType) return homeType;
+
+  const normalized = homeType.trim();
+
+  // Single Family variants
+  if (normalized === 'Single Family Residence' || normalized === 'Single Family Home') {
+    return 'Single Family';
+  }
+
+  // Villa variants
+  if (normalized === 'Attached Villa') {
+    return 'Villa';
+  }
+
+  // Townhouse variants
+  if (normalized === 'Townhouse') {
+    return 'Townhome';
+  }
+
+  return normalized;
+}
+
 // ========== POPULATION FUNCTIONS ==========
 
 /**
@@ -18,10 +48,9 @@ export function populateHomeTypes(houses, applyFiltersCallback) {
   const homeTypesSet = new Set();
   houses.forEach(house => {
     if (house.homeType) {
-      if (house.homeType === 'Single Family Residence') {
-        house.homeType = 'Single Family'
-      }
-      homeTypesSet.add(house.homeType);
+      const normalized = normalizeHomeType(house.homeType);
+      house.homeType = normalized;
+      homeTypesSet.add(normalized);
     }
   });
 
@@ -132,7 +161,7 @@ export function populateBedrooms(applyFiltersCallback) {
  */
 export function populateGarages(applyFiltersCallback) {
   const container = document.getElementById('garages-container');
-  const garageOptions = ['1-2', '3-4', '5+'];
+  const garageOptions = ['1-2', '3-4'];
 
   garageOptions.forEach(range => {
     const btn = document.createElement('button');
@@ -467,8 +496,6 @@ export function applyFilters(map, geojson, getSelectedId, setSelectedId, closeDe
 
   // Step 2: If house filters are active, filter houses and get matching villages
   if (hasHouseFilters && allHouses.length > 0) {
-    let debugCount = 0; // For logging first few houses
-
     console.log('🔍 House-based filters active:', {
       homeTypes: filterState.homeTypes,
       bedrooms: filterState.bedrooms,
@@ -481,7 +508,8 @@ export function applyFilters(map, geojson, getSelectedId, setSelectedId, closeDe
 
       // Home type filter
       if (filterState.homeTypes.length > 0) {
-        matches = matches && filterState.homeTypes.includes(house.homeType);
+        const normalizedHouseType = normalizeHomeType(house.homeType);
+        matches = matches && filterState.homeTypes.includes(normalizedHouseType);
       }
 
       // Bedroom filter - exact match
@@ -504,15 +532,8 @@ export function applyFilters(map, geojson, getSelectedId, setSelectedId, closeDe
         const matchesGarages = filterState.garages.some(range => {
           if (range === '1-2') return garageCount >= 1 && garageCount <= 2;
           if (range === '3-4') return garageCount >= 3 && garageCount <= 4;
-          if (range === '5+') return garageCount >= 5;
           return false;
         });
-
-        // Debug garage filter
-        if (filterState.garages.includes('5+') && debugCount < 3) {
-          console.log(`Garage check: "${garageStr}" → ${garageCount} → matches 5+? ${garageCount >= 5} → overall match: ${matchesGarages}`);
-          debugCount++;
-        }
 
         matches = matches && matchesGarages;
       }

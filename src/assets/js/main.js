@@ -176,7 +176,7 @@ map.on('load', () => {
         </div>
         <div class="flex items-center gap-2">
           <div class="w-4 h-4 rounded-sm" style="background: #676ACE;"></div>
-          <span class="text-xs text-gray-700">Resale Homes</span>
+          <span class="text-xs text-gray-700">Resale Homes Only</span>
         </div>
       `;
 
