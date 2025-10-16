@@ -592,7 +592,8 @@ export function applyFilters(map, geojson, getSelectedId, setSelectedId, closeDe
       if (filterState.forSale === 'new') {
         matches = matches && props.new_construction === true;
       } else if (filterState.forSale === 'existing') {
-        matches = matches && props.new_construction === false;
+        // Show neighborhoods with resale homes (even if they also have new construction)
+        matches = matches && props.has_resale_homes === true;
       }
     }
 

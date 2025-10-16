@@ -76,6 +76,25 @@ export function hasNewConstruction(neighborhoodName) {
 }
 
 /**
+ * Check if a neighborhood has resale homes (has houses for sale)
+ * @param {string} neighborhoodName - Name from GeoJSON
+ * @returns {boolean} True if neighborhood has resale homes available
+ */
+export function hasResaleHomes(neighborhoodName) {
+  const houses = getHousesForSale();
+  const normalizedSearchName = normalizeNeighborhoodName(neighborhoodName);
+
+  // Check if any houses exist in this neighborhood
+  const hasHouses = houses.some(h => {
+    const houseVillage = h.village || '';
+    const normalizedHouseVillage = normalizeNeighborhoodName(houseVillage);
+    return normalizedHouseVillage === normalizedSearchName;
+  });
+
+  return hasHouses;
+}
+
+/**
  * Calculate actual price range from houses for sale in a neighborhood
  * @param {string} neighborhoodName - Name of the neighborhood
  * @returns {string|null} Formatted price range or null if no houses
@@ -265,6 +284,7 @@ export function loadNeighborhoodsGeojson(map, geojson) {
       // Use mapped Wix name if available, otherwise keep original
       const wixName = NEIGHBORHOOD_NAME_MAPPING[originalName] || originalName;
       const hasNew = hasNewConstruction(originalName);
+      const hasResales = hasResaleHomes(wixName);
 
       // Get Wix neighborhood data to extract amenitiesTags
       const neighborhoodsData = getNeighborhoodsData();
@@ -287,6 +307,7 @@ export function loadNeighborhoodsGeojson(map, geojson) {
           ...feature.properties,
           neighborhood: wixName, // Use Wix name
           new_construction: hasNew, // Check using original for matching
+          has_resale_homes: hasResales, // Check if neighborhood has resale homes
           amenities: amenities, // Use Wix amenitiesTags
           priceRange: calculatedPriceRange // Actual price range from houses
         }

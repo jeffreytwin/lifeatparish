@@ -15,7 +15,8 @@ const map = new mapboxgl.Map({
   container: 'map',
   style: 'mapbox://styles/mapbox/light-v11',
   center: [-82.43, 27.58], // Parrish, FL
-  zoom: 7
+  zoom: 7,
+  cooperativeGestures: true
 });
 
 // Track when critical data is loaded
@@ -170,13 +171,9 @@ map.on('load', () => {
       this.container.className = 'mapboxgl-ctrl bg-white p-2.5 rounded shadow-md';
 
       this.container.innerHTML = `
-        <div class="flex items-center gap-2 mb-1.5">
-          <div class="w-4 h-4 rounded-sm" style="background: #10b981;"></div>
-          <span class="text-xs text-gray-700">New Construction</span>
-        </div>
         <div class="flex items-center gap-2">
-          <div class="w-4 h-4 rounded-sm" style="background: #676ACE;"></div>
-          <span class="text-xs text-gray-700">Resale Homes Only</span>
+          <div class="w-4 h-4 rounded-sm" style="background: #10b981;"></div>
+          <span class="text-xs text-gray-700">New Construction Available</span>
         </div>
       `;
 
