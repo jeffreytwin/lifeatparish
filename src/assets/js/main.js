@@ -14,8 +14,8 @@ mapboxgl.accessToken = config.mapboxAccessToken;
 const map = new mapboxgl.Map({
   container: 'map',
   style: 'mapbox://styles/mapbox/light-v11',
-  center: [-82.43, 27.58], // Parrish, FL
-  zoom: 7,
+  center: [-82.51, 27.58], // Parrish, FL - wider view showing beach proximity
+  zoom: 11.5,
   cooperativeGestures: true
 });
 
@@ -59,7 +59,7 @@ function initializeMapIfReady() {
     }
 
     // Fit map to all neighborhoods on initial load
-    fitMapToAllNeighborhoods(map, neighborhoodGeojson);
+    // fitMapToAllNeighborhoods(map, neighborhoodGeojson); // Commented out to use custom initial view
   }
 }
 
@@ -186,7 +186,7 @@ map.on('load', () => {
     }
   }
 
-  map.addControl(new LegendControl(), 'bottom-left');
+  map.addControl(new LegendControl(), 'top-left');
 
   // Initialize map layers once floor plans and neighborhoods are loaded
   initializeMapIfReady();

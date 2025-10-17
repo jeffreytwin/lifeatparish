@@ -166,7 +166,7 @@ export function showNeighborhoodDetails(neighborhood) {
     headerContainer.style.cssText = 'height: 240px;';
 
     // Make header clickable if URL is available
-    const rawNeighborhoodUrl = neighborhoodData && (neighborhoodData.neighborhoodHomesForSale || neighborhoodData['neighborhood-homes-for-sale'] || neighborhoodData['link-villages-title']);
+    const rawNeighborhoodUrl = neighborhoodData && neighborhoodData['link-copy-of-neighborhood-title'];
     if (rawNeighborhoodUrl) {
       // Ensure URL starts with base domain
       const neighborhoodUrl = rawNeighborhoodUrl.startsWith('http') ? rawNeighborhoodUrl : `https://www.lifeatparrish.com${rawNeighborhoodUrl.startsWith('/') ? rawNeighborhoodUrl : '/' + rawNeighborhoodUrl}`;
@@ -287,14 +287,14 @@ export function showNeighborhoodDetails(neighborhood) {
     specsSection.className = 'mb-6';
 
     const specsGrid = document.createElement('div');
-    specsGrid.className = 'grid grid-cols-2 gap-2';
+    specsGrid.className = 'grid grid-cols-2 gap-4';
 
     // Home Types
     if (neighborhoodData.homeTypes) {
       const homeTypesItem = document.createElement('div');
       homeTypesItem.className = 'flex flex-col items-center text-center';
       homeTypesItem.innerHTML = `
-        <img loading="lazy" src="/House Icon - Teal.png" alt="Home Types" class="w-8 h-8 object-contain" />
+        <img loading="lazy" src="/House Icon - Teal.png" alt="Home Types" class="w-10 h-10 object-contain" />
         <span class="text-sm font-semibold" style="color: #4AC2A9;">Home Types</span>
         <span class="text-xs text-gray-700">${neighborhoodData.homeTypes}</span>
       `;
@@ -422,8 +422,8 @@ export function showNeighborhoodDetails(neighborhood) {
   }
 
   // === ACTION BUTTONS (Fixed at bottom of panel) ===
-  // Get neighborhood URL from various possible field names
-  const rawNeighborhoodPageUrl = neighborhoodData && (neighborhoodData.neighborhoodHomesForSale || neighborhoodData['neighborhood-homes-for-sale'] || neighborhoodData['link-villages-title']);
+  // Get neighborhood URL from 'Neighborhood Homes for Sale' field
+  const rawNeighborhoodPageUrl = neighborhoodData && neighborhoodData['link-copy-of-neighborhood-title'];
 
   if (rawNeighborhoodPageUrl) {
     // Ensure URL starts with base domain
