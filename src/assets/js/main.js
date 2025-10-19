@@ -8,6 +8,126 @@ import { getHousesForSale, getNeighborhoodsData, getSelectedNeighborhoodId, setH
 
 const neighborhoodGeojson = await fetchNeighborhoodGeojson()
 
+/**
+ * Normalize neighborhood name for matching (same logic as in map.js)
+ * @param {string} name - Neighborhood name
+ * @returns {string} Normalized name
+ */
+function normalizeNeighborhoodName(name) {
+  const NEIGHBORHOOD_NAME_MAPPING = {
+    'Oakfield': 'Oakfield Lakes',
+    'Del Webb BayView': 'Del Webb at Bayview',
+    'Isles at BayView': 'Isles at Bayview',
+    'The Islands on the Manatee River': 'The Islands on The Manatee River'
+  };
+
+  const mappedName = NEIGHBORHOOD_NAME_MAPPING[name] || name;
+
+  return mappedName.toLowerCase()
+    .replace(/\s+/g, '') // Remove spaces
+    .replace(/[^a-z0-9]/g, ''); // Remove special characters
+}
+
+/**
+ * Parse URL parameters and get the neighborhood parameter
+ * @returns {string|null} Neighborhood name from URL or null
+ */
+function getNeighborhoodFromUrl() {
+  const urlParams = new URLSearchParams(window.location.search);
+  return urlParams.get('neighborhood');
+}
+
+/**
+ * Select a neighborhood programmatically by name
+ * @param {string} neighborhoodName - Name of the neighborhood to select
+ */
+function selectNeighborhoodByName(neighborhoodName) {
+  if (!map || !map.getSource('neighborhoods')) {
+    console.warn('Map or neighborhoods source not ready');
+    return;
+  }
+
+  const enhancedGeojson = getEnhancedGeojson();
+  if (!enhancedGeojson) {
+    console.warn('Enhanced GeoJSON not available');
+    return;
+  }
+
+  // Normalize the search name
+  const normalizedSearch = normalizeNeighborhoodName(neighborhoodName);
+
+  // Find matching feature
+  const feature = enhancedGeojson.features.find(f => {
+    const featureName = f.properties.neighborhood || '';
+    const normalizedFeatureName = normalizeNeighborhoodName(featureName);
+    return normalizedFeatureName === normalizedSearch;
+  });
+
+  if (!feature) {
+    console.warn(`Neighborhood not found: ${neighborhoodName}`);
+    return;
+  }
+
+  // Find the feature ID from the map source
+  const sourceFeatures = map.querySourceFeatures('neighborhoods');
+  const mapFeature = sourceFeatures.find(f => {
+    const featureName = f.properties.neighborhood || '';
+    const normalizedFeatureName = normalizeNeighborhoodName(featureName);
+    return normalizedFeatureName === normalizedSearch;
+  });
+
+  if (!mapFeature) {
+    console.warn(`Map feature not found: ${neighborhoodName}`);
+    return;
+  }
+
+  // Clear previous selection if any
+  if (getSelectedNeighborhoodId() !== null) {
+    map.setFeatureState(
+      { source: 'neighborhoods', id: getSelectedNeighborhoodId() },
+      { selected: false }
+    );
+  }
+
+  // Set new selection
+  setSelectedNeighborhoodId(mapFeature.id);
+  map.setFeatureState(
+    { source: 'neighborhoods', id: mapFeature.id },
+    { selected: true }
+  );
+
+  // Fade all other features
+  sourceFeatures.forEach(f => {
+    if (f.id !== mapFeature.id) {
+      map.setFeatureState(
+        { source: 'neighborhoods', id: f.id },
+        { faded: true }
+      );
+    }
+  });
+
+  // Fit bounds to the neighborhood
+  if (mapFeature.geometry && mapFeature.geometry.coordinates) {
+    const bounds = new mapboxgl.LngLatBounds();
+    const coords = mapFeature.geometry.coordinates[0];
+
+    coords.forEach(coord => {
+      bounds.extend(coord);
+    });
+
+    map.fitBounds(bounds, {
+      padding: 100,
+      maxZoom: map.getZoom(),
+      duration: 800
+    });
+  }
+
+  // Show details panel
+  showNeighborhoodDetails(mapFeature.properties);
+
+  console.log(`Auto-selected neighborhood: ${feature.properties.neighborhood}`);
+}
+
 // init mapbox
 mapboxgl.accessToken = config.mapboxAccessToken;
 
@@ -60,6 +180,15 @@ function initializeMapIfReady() {
 
     // Fit map to all neighborhoods on initial load
     // fitMapToAllNeighborhoods(map, neighborhoodGeojson); // Commented out to use custom initial view
+
+    // Check for neighborhood parameter in URL and auto-select if present
+    const neighborhoodParam = getNeighborhoodFromUrl();
+    if (neighborhoodParam) {
+      // Wait a bit for map to fully render before selecting
+      setTimeout(() => {
+        selectNeighborhoodByName(neighborhoodParam);
+      }, 500);
+    }
   }
 }
 
