@@ -150,11 +150,13 @@ function calculatePriceRange(neighborhoodName) {
 }
 
 /**
- * Convert Wix image URL to usable format
+ * Convert Wix image URL to optimized format with auto-optimization
  * @param {string} wixUrl - Wix image URL
- * @returns {string} Converted image URL
+ * @param {number|null} width - Target width in pixels (optional, use null for auto)
+ * @param {number|null} height - Target height in pixels (optional, use null for auto)
+ * @returns {string} Converted image URL with Wix auto-optimization
  */
-export function convertWixImageUrl(wixUrl) {
+export function convertWixImageUrl(wixUrl, width = null, height = null) {
   if (!wixUrl) return null;
 
   if (wixUrl.startsWith('wix:image://')) {
@@ -162,6 +164,22 @@ export function convertWixImageUrl(wixUrl) {
     const match = wixUrl.match(/wix:image:\/\/v1\/(.*?)\/(.*?)#/);
     if (match) {
       const imageId = match[1];
+      const filename = match[2];
+
+      // If width and height are provided, create optimized URL with auto quality
+      if (width && height) {
+        const params = [
+          `w_${width}`,
+          `h_${height}`,
+          'al_c', // Align center
+          'usm_0.66_1.00_0.01' // Unsharp mask for sharpening
+        ].join(',');
+
+        // Let Wix auto-detect best format (WebP/AVIF) and quality
+        return `https://static.wixstatic.com/media/${imageId}/v1/fill/${params}/${encodeURIComponent(filename)}`;
+      }
+
+      // Fallback to basic URL - Wix will still auto-optimize
       return `https://static.wixstatic.com/media/${imageId}`;
     }
   }
@@ -470,7 +488,8 @@ export function setupMapInteractions(map, popup, getSelectedId, setSelectedId, s
 
       // Find matching neighborhood data
       const neighborhoodData = findNeighborhoodData(properties.neighborhood);
-      const imageUrl = neighborhoodData ? convertWixImageUrl(neighborhoodData.topBackgroundImage) : null;
+      // Optimized for popup: 560x320 (2x for retina) - Wix auto-optimizes quality and format
+      const imageUrl = neighborhoodData ? convertWixImageUrl(neighborhoodData.topBackgroundImage, 560, 320) : null;
 
       // Build popup HTML with enhanced styling
       const priceText = properties.priceRange ? properties.priceRange : '';

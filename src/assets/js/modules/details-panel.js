@@ -2,8 +2,8 @@
  * Details Panel Management
  */
 
-import { convertWixImageUrl, createImageWithLoader, hasNewConstruction, unfadeAllFeatures } from './map.js';
 import { normalizeHomeType } from './filters.js';
+import { convertWixImageUrl, createImageWithLoader, hasNewConstruction, unfadeAllFeatures } from './map.js';
 import { defaultPriceRange, filterState, getHousesForSale, getNeighborhoodsData } from './state.js';
 
 let map = null;
@@ -158,7 +158,8 @@ export function showNeighborhoodDetails(neighborhood) {
   detailsContent.appendChild(contentElement);
 
   // === HEADER IMAGE SECTION ===
-  const imageUrl = neighborhoodData ? convertWixImageUrl(neighborhoodData.topOfPageBackground) : null;
+  // Optimized for details panel header: 800x480 (2x for retina) - Wix auto-optimizes quality and format
+  const imageUrl = neighborhoodData ? convertWixImageUrl(neighborhoodData.topOfPageBackground, 800, 480) : null;
 
   if (imageUrl) {
     const headerContainer = document.createElement('div');
@@ -395,7 +396,8 @@ export function showNeighborhoodDetails(neighborhood) {
 
     neighborhoodData.amenitiesTags.forEach(amenity => {
       const imageField = getAmenityImageField(amenity);
-      const imageUrl = imageField && neighborhoodData[imageField] ? convertWixImageUrl(neighborhoodData[imageField]) : null;
+      // Optimized for amenity icons: 40x40 (2x for retina, w-5 h-5 = 20px display) - Wix auto-optimizes
+      const imageUrl = imageField && neighborhoodData[imageField] ? convertWixImageUrl(neighborhoodData[imageField], 40, 40) : null;
 
       const tag = document.createElement('div');
       tag.className = 'flex items-center gap-2 px-3 py-2 rounded-full bg-white';
