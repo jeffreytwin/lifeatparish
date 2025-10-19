@@ -113,7 +113,8 @@ function getAmenityImageField(amenityTag) {
     'Gated Community': 'gatedImage',
     'Nature Trails': 'trailsImage',
     'Community Events': 'lifestyleDirectorImage',
-    '55+': 'ageRestrictedImage'
+    '55+': 'ageRestrictedImage',
+    'Maintenance Included': 'maintenanceIncludedImage'
   };
 
   return mapping[amenityTag] || null;
@@ -288,14 +289,23 @@ export function showNeighborhoodDetails(neighborhood) {
     specsSection.className = 'mb-6';
 
     const specsGrid = document.createElement('div');
-    specsGrid.className = 'grid grid-cols-2 gap-4';
+    specsGrid.className = 'grid grid-cols-2 gap-6 items-start';
 
     // Home Types
     if (neighborhoodData.homeTypes) {
       const homeTypesItem = document.createElement('div');
       homeTypesItem.className = 'flex flex-col items-center text-center';
+
+      // Use Wix image if available, otherwise fallback to local
+      // 3x resolution for high quality (153x162)
+      const houseIconUrl = neighborhoodData.houseIconImage
+        ? convertWixImageUrl(neighborhoodData.houseIconImage, 153, 162)
+        : '/House Icon - Teal.png';
+
       homeTypesItem.innerHTML = `
-        <img loading="lazy" src="/House Icon - Teal.png" alt="Home Types" class="w-10 h-10 object-contain" />
+        <div style="height: 34px; display: flex; align-items: center; justify-content: center; ">
+          <img loading="lazy" src="${houseIconUrl}" alt="Home Types" class="w-10, h-10" style="object-fit: cover;" />
+        </div>
         <span class="text-sm font-semibold" style="color: #4AC2A9;">Home Types</span>
         <span class="text-xs text-gray-700">${neighborhoodData.homeTypes}</span>
       `;
@@ -307,7 +317,9 @@ export function showNeighborhoodDetails(neighborhood) {
       const bedroomItem = document.createElement('div');
       bedroomItem.className = 'flex flex-col items-center text-center';
       bedroomItem.innerHTML = `
-        <img loading="lazy" sizes="34px" srcset="https://static.wixstatic.com/media/d0be81_3dc38905965d4491b16f0d134f6c02bc~mv2.png/v1/fill/w_34,h_26,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/Bedroom%20Icon%20-%20Teal.png 1x, https://static.wixstatic.com/media/d0be81_3dc38905965d4491b16f0d134f6c02bc~mv2.png/v1/fill/w_68,h_52,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/Bedroom%20Icon%20-%20Teal.png 2x"  src="https://static.wixstatic.com/media/d0be81_3dc38905965d4491b16f0d134f6c02bc~mv2.png/v1/fill/w_34,h_26,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/Bedroom%20Icon%20-%20Teal.png" alt="Bedrooms" class="w-8 h-8 object-contain" />
+        <div style="height: 34px; display: flex; align-items: center; justify-content: center; ">
+          <img loading="lazy" sizes="34px" srcset="https://static.wixstatic.com/media/d0be81_3dc38905965d4491b16f0d134f6c02bc~mv2.png/v1/fill/w_102,h_78,al_c,usm_0.66_1.00_0.01,quality_auto/Bedroom%20Icon%20-%20Teal.png 3x, https://static.wixstatic.com/media/d0be81_3dc38905965d4491b16f0d134f6c02bc~mv2.png/v1/fill/w_68,h_52,al_c,usm_0.66_1.00_0.01,quality_auto/Bedroom%20Icon%20-%20Teal.png 2x, https://static.wixstatic.com/media/d0be81_3dc38905965d4491b16f0d134f6c02bc~mv2.png/v1/fill/w_34,h_26,al_c,usm_0.66_1.00_0.01,quality_auto/Bedroom%20Icon%20-%20Teal.png 1x" src="https://static.wixstatic.com/media/d0be81_3dc38905965d4491b16f0d134f6c02bc~mv2.png/v1/fill/w_102,h_78,al_c,usm_0.66_1.00_0.01,quality_auto/Bedroom%20Icon%20-%20Teal.png" alt="Bedrooms" class="w-8 h-8 object-contain" />
+        </div>
         <span class="text-sm font-semibold" style="color: #4AC2A9;">Bedrooms</span>
         <span class="text-xs text-gray-700">${neighborhoodData.bedroomRange}</span>
       `;
@@ -320,7 +332,9 @@ export function showNeighborhoodDetails(neighborhood) {
       const garageItem = document.createElement('div');
       garageItem.className = 'flex flex-col items-center text-center';
       garageItem.innerHTML = `
-        <img loading="lazy" sizes="35px" srcset="https://static.wixstatic.com/media/d0be81_b3139303e62f425aa1a0248a096469f7~mv2.png/v1/fill/w_35,h_34,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/Garage%20Icon%20-%20Teal.png 1x, https://static.wixstatic.com/media/d0be81_b3139303e62f425aa1a0248a096469f7~mv2.png/v1/fill/w_70,h_68,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/Garage%20Icon%20-%20Teal.png 2x" src="https://static.wixstatic.com/media/d0be81_b3139303e62f425aa1a0248a096469f7~mv2.png/v1/fill/w_35,h_34,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/Garage%20Icon%20-%20Teal.png" alt="Garage" class="w-8 h-8 object-contain" />
+        <div style="height: 34px; display: flex; align-items: center; justify-content: center; ">
+          <img loading="lazy" sizes="35px" srcset="https://static.wixstatic.com/media/d0be81_b3139303e62f425aa1a0248a096469f7~mv2.png/v1/fill/w_105,h_102,al_c,usm_0.66_1.00_0.01,quality_auto/Garage%20Icon%20-%20Teal.png 3x, https://static.wixstatic.com/media/d0be81_b3139303e62f425aa1a0248a096469f7~mv2.png/v1/fill/w_70,h_68,al_c,usm_0.66_1.00_0.01,quality_auto/Garage%20Icon%20-%20Teal.png 2x, https://static.wixstatic.com/media/d0be81_b3139303e62f425aa1a0248a096469f7~mv2.png/v1/fill/w_35,h_34,al_c,usm_0.66_1.00_0.01,quality_auto/Garage%20Icon%20-%20Teal.png 1x" src="https://static.wixstatic.com/media/d0be81_b3139303e62f425aa1a0248a096469f7~mv2.png/v1/fill/w_105,h_102,al_c,usm_0.66_1.00_0.01,quality_auto/Garage%20Icon%20-%20Teal.png" alt="Garage" class="w-8 h-8 object-contain" />
+        </div>
         <span class="text-sm font-semibold" style="color: #4AC2A9;">Garages</span>
         <span class="text-xs text-gray-700">${neighborhoodData.garageSizeRange}</span>
       `;
@@ -332,7 +346,9 @@ export function showNeighborhoodDetails(neighborhood) {
       const sqftItem = document.createElement('div');
       sqftItem.className = 'flex flex-col items-center text-center';
       sqftItem.innerHTML = `
-        <img loading="lazy" src="/Measurement Icon - Teal.png" alt="Square Feet" class="w-8 h-8 object-contain" />
+        <div style="height: 34px; display: flex; align-items: center; justify-content: center; ">
+          <img loading="lazy" src="/Measurement Icon - Teal.png" alt="Square Feet" class="w-8 h-8 object-contain" />
+        </div>
         <span class="text-sm font-semibold" style="color: #4AC2A9;">Square Feet</span>
         <span class="text-xs text-gray-700">${neighborhoodData.squareFeet}</span>
       `;
@@ -396,7 +412,7 @@ export function showNeighborhoodDetails(neighborhood) {
 
     neighborhoodData.amenitiesTags.forEach(amenity => {
       const imageField = getAmenityImageField(amenity);
-      // Optimized for amenity icons: 40x40 (2x for retina, w-5 h-5 = 20px display) - Wix auto-optimizes
+      // Optimized for amenity icons: 20x20 - Wix auto-optimizes
       const imageUrl = imageField && neighborhoodData[imageField] ? convertWixImageUrl(neighborhoodData[imageField], 40, 40) : null;
 
       const tag = document.createElement('div');
