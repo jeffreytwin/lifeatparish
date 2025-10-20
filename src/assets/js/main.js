@@ -128,6 +128,61 @@ function selectNeighborhoodByName(neighborhoodName) {
   console.log(`Auto-selected neighborhood: ${feature.properties.neighborhood}`);
 }
 
+/**
+ * Setup postMessage listener to receive neighborhood selection from parent window
+ * This allows the Wix parent page to communicate with the embedded iframe
+ */
+function setupPostMessageListener() {
+  window.addEventListener('message', (event) => {
+    // Security: In production, you might want to check event.origin
+    // For now, we'll accept messages from any origin
+    // Example: if (event.origin !== 'https://www.lifeatparrish.com') return;
+
+    // Check if message contains neighborhood data
+    if (event.data && event.data.neighborhood) {
+      const neighborhoodName = event.data.neighborhood;
+      console.log(`Received neighborhood selection via postMessage: ${neighborhoodName}`);
+
+      // Select the neighborhood
+      selectNeighborhoodByName(neighborhoodName);
+    }
+
+    // Also support action commands
+    if (event.data && event.data.action === 'selectNeighborhood' && event.data.name) {
+      console.log(`Received selectNeighborhood action via postMessage: ${event.data.name}`);
+      selectNeighborhoodByName(event.data.name);
+    }
+
+    // Support clearing selection
+    if (event.data && event.data.action === 'clearSelection') {
+      console.log('Received clearSelection action via postMessage');
+
+      // Clear selection
+      if (getSelectedNeighborhoodId() !== null) {
+        map.setFeatureState(
+          { source: 'neighborhoods', id: getSelectedNeighborhoodId() },
+          { selected: false }
+        );
+        setSelectedNeighborhoodId(null);
+      }
+
+      // Unfade all features
+      const sourceFeatures = map.querySourceFeatures('neighborhoods');
+      sourceFeatures.forEach(f => {
+        map.setFeatureState(
+          { source: 'neighborhoods', id: f.id },
+          { faded: false }
+        );
+      });
+
+      // Close details panel
+      closeDetailsPanel();
+    }
+  });
+
+  console.log('postMessage listener initialized - ready to receive neighborhood selections from parent window');
+}
+
 // init mapbox
 mapboxgl.accessToken = config.mapboxAccessToken;
 
@@ -189,6 +244,9 @@ function initializeMapIfReady() {
         selectNeighborhoodByName(neighborhoodParam);
       }, 500);
     }
+
+    // Setup postMessage listener for parent window communication
+    setupPostMessageListener();
   }
 }
 
