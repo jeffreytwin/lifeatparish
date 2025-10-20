@@ -200,8 +200,10 @@
   right: auto !important;
 }
 
-/* Mobile styles */
-@media (max-width: 768px) {
+/* ===== RESPONSIVE DESIGN ===== */
+
+/* Mobile: Bottom sheet instead of side panel */
+@media (max-width: 767px) {
   .details-panel {
     right: auto;
     left: 0;
@@ -216,5 +218,22 @@
   .details-panel.open {
     bottom: 0;
     right: auto;
+  }
+
+  /* Don't push map on mobile */
+  .map-container.panel-open {
+    margin-right: 0;
+  }
+}
+
+/* Tablet: Narrower panel */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .details-panel {
+    width: 320px;
+    right: -320px;
+  }
+
+  .map-container.panel-open {
+    margin-right: 320px;
   }
 }

@@ -131,3 +131,21 @@
 .filter-section {
     /* Spacing handled by Tailwind gap-6 */
 }
+
+/* ===== RESPONSIVE DESIGN ===== */
+
+/* Mobile: Hide sidebar, show full-screen map */
+@media (max-width: 767px) {
+    .sidebar {
+        display: none;
+    }
+}
+
+/* Tablet: Narrow sidebar */
+@media (min-width: 768px) and (max-width: 1023px) {
+    .sidebar {
+        width: 280px;
+        max-width: 280px;
+        min-width: 280px;
+    }
+}
