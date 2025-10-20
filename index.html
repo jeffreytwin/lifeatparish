@@ -40,6 +40,11 @@
         </div>
 
         <aside class="sidebar bg-white shadow-lg flex flex-col">
+          <!-- Mobile Close Button Header (only visible on mobile) -->
+          <div class="mobile-close-header md:hidden sticky top-0 bg-white z-10 flex justify-end py-2 px-4">
+            <button id="mobile-sidebar-close" class="text-gray-500 hover:text-gray-700 text-2xl w-8 h-8 flex items-center justify-center transition-colors" aria-label="Close filters">×</button>
+          </div>
+
           <!-- Loading Overlay -->
           <div id="sidebar-loading" class="sidebar-loading-overlay">
             <div class="loading-spinner"></div>
@@ -250,6 +255,9 @@
             <!-- House cards appended dynamically -->
           </div>
         </div>
+
+        <!-- Mobile overlay for sidebar (when opened as bottom sheet) -->
+        <div id="mobile-sidebar-overlay" class="mobile-sidebar-overlay"></div>
 
       </main>
     </div>

@@ -134,10 +134,25 @@
 
 /* ===== RESPONSIVE DESIGN ===== */
 
-/* Mobile: Hide sidebar, show full-screen map */
+/* Mobile: Transform sidebar into bottom sheet */
 @media (max-width: 767px) {
     .sidebar {
-        display: none;
+        position: fixed;
+        top: auto;
+        bottom: -100%;
+        left: 0;
+        width: 100%;
+        height: 85vh;
+        max-height: 85vh;
+        max-width: 100%;
+        min-width: 100%;
+        border-radius: 20px 20px 0 0;
+        transition: bottom 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+        z-index: 201;
+    }
+
+    .sidebar.mobile-open {
+        bottom: 0;
     }
 }
 

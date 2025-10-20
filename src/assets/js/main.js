@@ -404,4 +404,49 @@ function initializeFilters() {
 
   // Setup filters with houses data, neighborhoods data, and enhanced GeoJSON
   setupFilters(enhancedGeojson, houses, neighborhoods, applyFiltersWrapper);
+
 }
+
+// ===== MOBILE SIDEBAR TOGGLE =====
+// Simple toggle for mobile bottom sheet (reuses existing sidebar)
+const mobileFiltersBtn = document.getElementById('mobile-filters-btn');
+const sidebar = document.querySelector('.sidebar');
+const mobileOverlay = document.getElementById('mobile-sidebar-overlay');
+const mobileCloseBtn = document.getElementById('mobile-sidebar-close');
+
+const openMobileSidebar = () => {
+  sidebar?.classList.add('mobile-open');
+  mobileOverlay?.classList.add('active');
+  document.body.classList.add('mobile-sidebar-open');
+};
+
+const closeMobileSidebar = () => {
+  sidebar?.classList.remove('mobile-open');
+  mobileOverlay?.classList.remove('active');
+  document.body.classList.remove('mobile-sidebar-open');
+};
+
+mobileFiltersBtn?.addEventListener('click', openMobileSidebar);
+mobileCloseBtn?.addEventListener('click', closeMobileSidebar);
+mobileOverlay?.addEventListener('click', closeMobileSidebar);
+
+// ===== MOBILE SEARCH =====
+// Wire up mobile search to use existing desktop search functionality
+const mobileSearchInput = document.getElementById('mobile-search-input');
+const desktopSearchInput = document.getElementById('search-input');
+
+// Sync mobile search with desktop search (they share the same filter logic)
+mobileSearchInput?.addEventListener('input', (e) => {
+  if (desktopSearchInput) {
+    desktopSearchInput.value = e.target.value;
+    // Trigger input event on desktop search to activate existing search logic
+    desktopSearchInput.dispatchEvent(new Event('input', { bubbles: true }));
+  }
+});
+
+// Sync desktop search back to mobile (for when filters are cleared, etc.)
+desktopSearchInput?.addEventListener('input', (e) => {
+  if (mobileSearchInput && e.target.value !== mobileSearchInput.value) {
+    mobileSearchInput.value = e.target.value;
+  }
+});

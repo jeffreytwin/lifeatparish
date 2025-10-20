@@ -124,6 +124,39 @@
   display: none;
 }
 
+/* Mobile Sidebar Overlay */
+.mobile-sidebar-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.4);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+  z-index: 200;
+}
+
+@media (max-width: 767px) {
+  .mobile-sidebar-overlay {
+    display: block;
+  }
+
+  .mobile-sidebar-overlay.active {
+    opacity: 1;
+    visibility: visible;
+  }
+}
+
+/* Prevent body scroll when sidebar is open on mobile */
+@media (max-width: 767px) {
+  body.mobile-sidebar-open {
+    overflow: hidden;
+  }
+}
+
 /* Hide/adjust map controls on mobile */
 @media (max-width: 767px) {
   /* Move legend to bottom-left and make smaller */

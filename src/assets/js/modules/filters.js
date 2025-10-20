@@ -433,6 +433,12 @@ export function setupClearAll(applyFiltersCallback) {
     // Reset UI
     document.getElementById('search-input').value = '';
     document.getElementById('clear-search').classList.add('hidden');
+
+    // Also clear mobile search input
+    const mobileSearchInput = document.getElementById('mobile-search-input');
+    if (mobileSearchInput) {
+      mobileSearchInput.value = '';
+    }
     document.getElementById('price-min').value = defaultPriceRange.min;
     document.getElementById('price-max').value = defaultPriceRange.max;
     document.querySelectorAll('#home-types-container button').forEach(btn => {
