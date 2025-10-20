@@ -10,10 +10,34 @@
     <link href="./src/assets/css/map.css" rel="stylesheet">
     <link href="./src/assets/css/sidebar.css" rel="stylesheet">
     <link href="./src/assets/css/details-panel.css" rel="stylesheet">
+    <link href="./src/assets/css/tablet.css" rel="stylesheet">
+    <link href="./src/assets/css/mobile.css" rel="stylesheet">
   </head>
   <body>
     <div class="app-container">
       <main class="app-content">
+
+        <!-- Mobile Top Bar (only visible on mobile) -->
+        <div class="mobile-top-bar">
+          <!-- Search Bar -->
+          <div class="mobile-search">
+            <svg class="mobile-search-icon w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+            </svg>
+            <input
+              type="text"
+              id="mobile-search-input"
+              class="mobile-search-input"
+              placeholder="Search neighborhoods..."
+            />
+          </div>
+
+          <!-- Filters Button -->
+          <button id="mobile-filters-btn" class="mobile-filters-btn">
+            Filters
+            <span id="mobile-filters-badge" class="filters-badge hidden">0</span>
+          </button>
+        </div>
 
         <aside class="sidebar bg-white shadow-lg flex flex-col">
           <!-- Loading Overlay -->

@@ -15,6 +15,7 @@
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
+/* Only show on mobile, hide on tablet and desktop */
 @media (max-width: 767px) {
   .mobile-top-bar {
     display: flex;
@@ -26,6 +27,13 @@
   .map-container {
     margin-top: 60px;
     height: calc(100vh - 60px);
+  }
+}
+
+/* Ensure mobile top bar is hidden on tablet and desktop */
+@media (min-width: 768px) {
+  .mobile-top-bar {
+    display: none;
   }
 }
 
