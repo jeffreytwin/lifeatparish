@@ -133,10 +133,20 @@ function selectNeighborhoodByName(neighborhoodName) {
  * This allows the Wix parent page to communicate with the embedded iframe
  */
 function setupPostMessageListener() {
+  // Allowed origins for postMessage communication
+  const ALLOWED_ORIGINS = [
+    'https://www.lifeatparrish.com',
+    'https://lifeatparrish.com',
+    // Allow localhost for development (any port)
+    ...(window.location.hostname === 'localhost' ? ['http://localhost:5173', 'http://localhost:4173'] : [])
+  ];
+
   window.addEventListener('message', (event) => {
-    // Security: In production, you might want to check event.origin
-    // For now, we'll accept messages from any origin
-    // Example: if (event.origin !== 'https://www.lifeatparrish.com') return;
+    // Security: Validate message origin
+    if (!ALLOWED_ORIGINS.includes(event.origin)) {
+      console.warn(`Rejected postMessage from unauthorized origin: ${event.origin}`);
+      return;
+    }
 
     // Check if message contains neighborhood data
     if (event.data && event.data.neighborhood) {
@@ -184,7 +194,7 @@ function setupPostMessageListener() {
 }
 
 // init mapbox
-mapboxgl.accessToken = config.mapboxAccessToken;
+mapboxgl.accessToken = window.config.mapboxAccessToken;
 
 const map = new mapboxgl.Map({
   container: 'map',

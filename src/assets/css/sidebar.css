@@ -146,13 +146,20 @@
         max-height: 85vh;
         max-width: 100%;
         min-width: 100%;
-        border-radius: 20px 20px 0 0;
+        border-radius: 20px 20px 0 0 !important;
+        box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.15) !important;
         transition: bottom 0.3s cubic-bezier(0.32, 0.72, 0, 1);
         z-index: 201;
+        overflow: hidden;
     }
 
     .sidebar.mobile-open {
         bottom: 0;
+    }
+
+    /* Ensure rounded corners show through */
+    .sidebar .mobile-close-header {
+        border-radius: 20px 20px 0 0;
     }
 }
 

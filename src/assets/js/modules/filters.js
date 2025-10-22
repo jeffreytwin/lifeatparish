@@ -694,6 +694,7 @@ export function updateFilterUI(matchedCount, geojson) {
   const badge = document.getElementById('active-filters-badge');
   const clearAllBtn = document.getElementById('clear-all-filters');
 
+  // Update desktop filter badge
   if (totalFilters > 0) {
     badge.classList.remove('hidden');
     clearAllBtn.classList.remove('hidden');
@@ -701,6 +702,17 @@ export function updateFilterUI(matchedCount, geojson) {
   } else {
     badge.classList.add('hidden');
     clearAllBtn.classList.add('hidden');
+  }
+
+  // Update mobile filter badge
+  const mobileBadge = document.getElementById('mobile-filters-badge');
+  if (mobileBadge) {
+    if (totalFilters > 0) {
+      mobileBadge.classList.remove('hidden');
+      mobileBadge.textContent = totalFilters;
+    } else {
+      mobileBadge.classList.add('hidden');
+    }
   }
 
   updateResultsCounter(matchedCount, geojson);

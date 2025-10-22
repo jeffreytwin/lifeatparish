@@ -9,7 +9,7 @@ import { createClient, OAuthStrategy } from '@wix/sdk';
 const wixClient = createClient({
   modules: { items },
   auth: OAuthStrategy({
-    clientId: '7cbe278c-f794-4ac6-8261-404022bb5625',
+    clientId: window.config.wixClientId,
   })
 });
 
