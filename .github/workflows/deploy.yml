@@ -25,11 +25,20 @@ jobs:
 
       - name: Create config.js
         run: |
-          cat > config.js << EOF
+          cat > public/config.js << EOF
+          // config.js - Configuration settings for the application
+
+          // Application configuration
           window.config = {
-            mapboxAccessToken: '${{ secrets.MAPBOX_ACCESS_TOKEN }}',
-            wixClientId: '7cbe278c-f794-4ac6-8261-404022bb5625',
-            appName: 'Parrish Map'
+              // Mapbox access token
+              mapboxAccessToken: '${{ secrets.MAPBOX_ACCESS_TOKEN }}',
+
+              // Wix OAuth Client ID
+              wixClientId: '7cbe278c-f794-4ac6-8261-404022bb5625',
+
+              // Other configuration options
+              appName: 'Parrish Map',
+              appVersion: '1.0.0',
           };
           EOF
 
@@ -37,9 +46,6 @@ jobs:
         run: npm run build
 
       - name: Deploy to Firebase
-        uses: FirebaseExtended/action-hosting-deploy@v0
-        with:
-          repoToken: ${{ secrets.GITHUB_TOKEN }}
-          firebaseServiceAccount: ${{ secrets.FIREBASE_TOKEN }}
-          channelId: live
-          projectId: lifeatparrish
+        run: |
+          npm install -g firebase-tools
+          firebase deploy --only hosting --project lifeatparrish --token "${{ secrets.FIREBASE_TOKEN }}"
