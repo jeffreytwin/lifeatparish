@@ -256,6 +256,113 @@ export function showNeighborhoodDetails(neighborhood) {
     headerElement.appendChild(headerWrapper);
   }
 
+  // === ACTION BUTTONS (Right after header) ===
+  // Get neighborhood URL from 'Neighborhood Homes for Sale' field
+  const rawNeighborhoodPageUrl = neighborhoodData && neighborhoodData['link-copy-of-neighborhood-title'];
+
+  if (rawNeighborhoodPageUrl) {
+    // Ensure URL starts with base domain
+    const neighborhoodPageUrl = rawNeighborhoodPageUrl.startsWith('http') ? rawNeighborhoodPageUrl : `https://www.lifeatparrish.com${rawNeighborhoodPageUrl.startsWith('/') ? rawNeighborhoodPageUrl : '/' + rawNeighborhoodPageUrl}`;
+
+    // Check if neighborhood has floor plans (new construction)
+    const hasFloorPlans = isNewConstruction;
+
+    // Check if neighborhood has homes for sale
+    const neighborhoodHouses = getHousesForSale().filter(house => {
+      const houseVillage = house.village || '';
+      return normalizeNeighborhoodName(houseVillage) === normalizeNeighborhoodName(neighborhood.neighborhood);
+    });
+    const hasHomesForSale = neighborhoodHouses.length > 0;
+
+    const buttonContainer = document.createElement('div');
+    buttonContainer.className = 'p-4 bg-white';
+
+    // Determine which buttons to show
+    if (hasFloorPlans && hasHomesForSale) {
+      // Show both buttons - stacked vertically
+      buttonContainer.style.display = 'flex';
+      buttonContainer.style.flexDirection = 'column';
+      buttonContainer.style.gap = '0.75rem';
+
+      // See Floor Plans button
+      const floorPlansButton = document.createElement('a');
+      floorPlansButton.href = neighborhoodPageUrl;
+      floorPlansButton.target = '_blank';
+      floorPlansButton.rel = 'noopener noreferrer';
+      floorPlansButton.className = 'block w-full text-center py-3 px-6 rounded-lg font-bold text-white transition-all duration-200 shadow-lg hover:shadow-xl';
+      floorPlansButton.style.cssText = 'background: linear-gradient(135deg, #10b981 0%, #059669 100%);';
+      floorPlansButton.innerHTML = `
+        See Floor Plans
+        <svg style="display: inline-block; width: 1.25rem; height: 1.25rem; margin-left: 0.5rem; vertical-align: middle;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+        </svg>
+      `;
+      buttonContainer.appendChild(floorPlansButton);
+
+      // See Homes for Sale button
+      const homesButton = document.createElement('a');
+      homesButton.href = neighborhoodPageUrl;
+      homesButton.target = '_blank';
+      homesButton.rel = 'noopener noreferrer';
+      homesButton.className = 'block w-full text-center py-3 px-6 rounded-lg font-bold text-white transition-all duration-200 shadow-lg hover:shadow-xl';
+      homesButton.style.cssText = 'background: linear-gradient(135deg, #676ACE 0%, #5558b8 100%);';
+      homesButton.innerHTML = `
+        See Homes for Sale
+        <svg style="display: inline-block; width: 1.25rem; height: 1.25rem; margin-left: 0.5rem; vertical-align: middle;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+        </svg>
+      `;
+      buttonContainer.appendChild(homesButton);
+    } else if (hasFloorPlans) {
+      // Only floor plans - single button
+      const floorPlansButton = document.createElement('a');
+      floorPlansButton.href = neighborhoodPageUrl;
+      floorPlansButton.target = '_blank';
+      floorPlansButton.rel = 'noopener noreferrer';
+      floorPlansButton.className = 'block w-full text-center py-3 px-6 rounded-lg font-bold text-white transition-all duration-200 shadow-lg hover:shadow-xl';
+      floorPlansButton.style.cssText = 'background: linear-gradient(135deg, #10b981 0%, #059669 100%);';
+      floorPlansButton.innerHTML = `
+        See Floor Plans
+        <svg style="display: inline-block; width: 1.25rem; height: 1.25rem; margin-left: 0.5rem; vertical-align: middle;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+        </svg>
+      `;
+      buttonContainer.appendChild(floorPlansButton);
+    } else if (hasHomesForSale) {
+      // Only homes for sale - single button
+      const homesButton = document.createElement('a');
+      homesButton.href = neighborhoodPageUrl;
+      homesButton.target = '_blank';
+      homesButton.rel = 'noopener noreferrer';
+      homesButton.className = 'block w-full text-center py-3 px-6 rounded-lg font-bold text-white transition-all duration-200 shadow-lg hover:shadow-xl';
+      homesButton.style.cssText = 'background: linear-gradient(135deg, #676ACE 0%, #5558b8 100%);';
+      homesButton.innerHTML = `
+        See Homes for Sale
+        <svg style="display: inline-block; width: 1.25rem; height: 1.25rem; margin-left: 0.5rem; vertical-align: middle;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+        </svg>
+      `;
+      buttonContainer.appendChild(homesButton);
+    } else {
+      // Neither - show generic explore button
+      const exploreButton = document.createElement('a');
+      exploreButton.href = neighborhoodPageUrl;
+      exploreButton.target = '_blank';
+      exploreButton.rel = 'noopener noreferrer';
+      exploreButton.className = 'block w-full text-center py-3 px-6 rounded-lg font-bold text-white transition-all duration-200 shadow-lg hover:shadow-xl';
+      exploreButton.style.cssText = `background: linear-gradient(135deg, ${themeColor} 0%, ${isNewConstruction ? '#5558b8' : '#3da894'} 100%);`;
+      exploreButton.innerHTML = `
+        Explore ${neighborhood.neighborhood}
+        <svg style="display: inline-block; width: 1.25rem; height: 1.25rem; margin-left: 0.5rem; vertical-align: middle;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+        </svg>
+      `;
+      buttonContainer.appendChild(exploreButton);
+    }
+
+    contentElement.appendChild(buttonContainer);
+  }
+
   // === KEY STATS SECTION ===
   // Commented out for now - can re-enable if needed
   // const filteredHouses = filterHousesByNeighborhood(neighborhood.neighborhood);
@@ -403,7 +510,8 @@ export function showNeighborhoodDetails(neighborhood) {
     amenitiesSection.className = 'mb-6';
 
     const amenitiesTitle = document.createElement('h3');
-    amenitiesTitle.className = 'text-lg font-bold text-gray-900 mb-3';
+    amenitiesTitle.className = 'text-lg font-bold mb-3';
+    amenitiesTitle.style.color = '#676ACE';
     amenitiesTitle.textContent = 'Amenities';
     amenitiesSection.appendChild(amenitiesTitle);
 
@@ -439,10 +547,7 @@ export function showNeighborhoodDetails(neighborhood) {
     contentElement.appendChild(amenitiesSection);
   }
 
-  // === ACTION BUTTONS (Fixed at bottom of panel) ===
-  // Get neighborhood URL from 'Neighborhood Homes for Sale' field
-  const rawNeighborhoodPageUrl = neighborhoodData && neighborhoodData['link-copy-of-neighborhood-title'];
-
+  // === ACTION BUTTONS (Fixed at bottom of panel - duplicate for easy access) ===
   if (rawNeighborhoodPageUrl) {
     // Ensure URL starts with base domain
     const neighborhoodPageUrl = rawNeighborhoodPageUrl.startsWith('http') ? rawNeighborhoodPageUrl : `https://www.lifeatparrish.com${rawNeighborhoodPageUrl.startsWith('/') ? rawNeighborhoodPageUrl : '/' + rawNeighborhoodPageUrl}`;

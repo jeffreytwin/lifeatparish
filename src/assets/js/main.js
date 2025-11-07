@@ -243,8 +243,12 @@ function initializeMapIfReady() {
       }
     }
 
-    // Fit map to all neighborhoods on initial load
-    // fitMapToAllNeighborhoods(map, neighborhoodGeojson); // Commented out to use custom initial view
+    // Fit map to all neighborhoods on mobile, keep custom view on desktop
+    const isMobile = window.innerWidth < 768;
+    if (isMobile) {
+      fitMapToAllNeighborhoods(map, neighborhoodGeojson);
+    }
+    // Desktop uses custom initial view (center: [-82.51, 27.58], zoom: 11.5) to show beach proximity
 
     // Check for neighborhood parameter in URL and auto-select if present
     const neighborhoodParam = getNeighborhoodFromUrl();
@@ -423,6 +427,7 @@ const mobileFiltersBtn = document.getElementById('mobile-filters-btn');
 const sidebar = document.querySelector('.sidebar');
 const mobileOverlay = document.getElementById('mobile-sidebar-overlay');
 const mobileCloseBtn = document.getElementById('mobile-sidebar-close');
+const viewResultsBtn = document.getElementById('view-results-btn');
 
 const openMobileSidebar = () => {
   sidebar?.classList.add('mobile-open');
@@ -439,6 +444,7 @@ const closeMobileSidebar = () => {
 mobileFiltersBtn?.addEventListener('click', openMobileSidebar);
 mobileCloseBtn?.addEventListener('click', closeMobileSidebar);
 mobileOverlay?.addEventListener('click', closeMobileSidebar);
+viewResultsBtn?.addEventListener('click', closeMobileSidebar);
 
 // ===== MOBILE SEARCH =====
 // Wire up mobile search to use existing desktop search functionality
