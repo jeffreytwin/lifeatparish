@@ -454,17 +454,23 @@ export function setupMapInteractions(map, popup, getSelectedId, setSelectedId, s
   let hoveredNeighborhoodId = null;
   const imageCache = new Map(); // Cache for preloaded images
 
-  // Change cursor to pointer on hover
-  map.on('mouseenter', 'neighborhood-fills', () => {
-    map.getCanvas().style.cursor = 'pointer';
-  });
+  // Detect if device has touch capability
+  const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
 
-  map.on('mouseleave', 'neighborhood-fills', () => {
-    map.getCanvas().style.cursor = '';
-  });
+  // Change cursor to pointer on hover (desktop only)
+  if (!isTouchDevice) {
+    map.on('mouseenter', 'neighborhood-fills', () => {
+      map.getCanvas().style.cursor = 'pointer';
+    });
 
-  // Hover effect - brighten polygon and show tooltip
-  map.on('mousemove', 'neighborhood-fills', (e) => {
+    map.on('mouseleave', 'neighborhood-fills', () => {
+      map.getCanvas().style.cursor = '';
+    });
+  }
+
+  // Hover effect - brighten polygon and show tooltip (desktop only)
+  if (!isTouchDevice) {
+    map.on('mousemove', 'neighborhood-fills', (e) => {
     if (e.features.length > 0) {
       if (hoveredNeighborhoodId !== null) {
         map.setFeatureState(
@@ -564,18 +570,19 @@ export function setupMapInteractions(map, popup, getSelectedId, setSelectedId, s
     }
   });
 
-  map.on('mouseleave', 'neighborhood-fills', () => {
-    if (hoveredNeighborhoodId !== null) {
-      map.setFeatureState(
-        { source: 'neighborhoods', id: hoveredNeighborhoodId },
-        { hover: false }
-      );
-    }
-    hoveredNeighborhoodId = null;
+    map.on('mouseleave', 'neighborhood-fills', () => {
+      if (hoveredNeighborhoodId !== null) {
+        map.setFeatureState(
+          { source: 'neighborhoods', id: hoveredNeighborhoodId },
+          { hover: false }
+        );
+      }
+      hoveredNeighborhoodId = null;
 
-    // Hide popup
-    popup.remove();
-  });
+      // Hide popup
+      popup.remove();
+    });
+  } // End of desktop-only hover interactions
 
   // Click event - select neighborhood
   map.on('click', 'neighborhood-fills', (e) => {

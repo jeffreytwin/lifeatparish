@@ -26,7 +26,8 @@
   /* Push map down to account for top bar */
   .map-container {
     margin-top: 60px;
-    height: calc(100vh - 60px);
+    height: calc(100vh - 60px); /* Fallback */
+    height: calc(100dvh - 60px); /* Dynamic viewport height */
   }
 }
 
@@ -159,10 +160,10 @@
 
 /* Hide/adjust map controls on mobile */
 @media (max-width: 767px) {
-  /* Move legend to bottom-left and make smaller */
+  /* Move legend to bottom-left and make smaller, above Mapbox logo */
   .mapboxgl-ctrl-top-left {
     top: auto !important;
-    bottom: 20px;
+    bottom: 50px; /* Raised from 20px to 50px to clear Mapbox logo */
     left: 10px;
   }
 

@@ -142,8 +142,10 @@
         bottom: -100%;
         left: 0;
         width: 100%;
-        height: 85vh;
-        max-height: 85vh;
+        height: 85vh; /* Fallback */
+        height: 85dvh; /* Dynamic viewport height */
+        max-height: 85vh; /* Fallback */
+        max-height: 85dvh; /* Dynamic viewport height */
         max-width: 100%;
         min-width: 100%;
         border-radius: 20px 20px 0 0 !important;
@@ -151,6 +153,7 @@
         transition: bottom 0.3s cubic-bezier(0.32, 0.72, 0, 1);
         z-index: 201;
         overflow: hidden;
+        -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
     }
 
     .sidebar.mobile-open {
