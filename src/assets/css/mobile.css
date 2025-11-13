@@ -51,7 +51,7 @@
   border: 1px solid #e0e0e0;
   border-radius: 18px;
   background: #f5f5f5;
-  font-size: 0.875rem;
+  font-size: 16px; /* Prevents iOS auto-zoom on focus */
   outline: none;
   transition: all 0.2s;
 }
