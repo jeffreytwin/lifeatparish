@@ -607,8 +607,9 @@ export function setupMapInteractions(map, popup, getSelectedId, setSelectedId, s
       // Fade all other features
       fadeUnselectedFeatures(map, clickedFeature.id);
 
-      // Pan map to fit the polygon bounds
-      if (clickedFeature.geometry && clickedFeature.geometry.coordinates) {
+      // Pan map to fit the polygon bounds (desktop only - mobile has full-screen panel)
+      const isMobileView = window.innerWidth < 768;
+      if (!isMobileView && clickedFeature.geometry && clickedFeature.geometry.coordinates) {
         const bounds = new mapboxgl.LngLatBounds();
         const coords = clickedFeature.geometry.coordinates[0];
 

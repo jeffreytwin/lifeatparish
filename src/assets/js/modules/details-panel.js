@@ -4,7 +4,7 @@
 
 import { normalizeHomeType } from './filters.js';
 import { convertWixImageUrl, createImageWithLoader, hasNewConstruction, unfadeAllFeatures } from './map.js';
-import { defaultPriceRange, filterState, getHousesForSale, getNeighborhoodsData } from './state.js';
+import { defaultPriceRange, filterState, getHousesForSale, getNeighborhoodsData, getSelectedNeighborhoodId, setSelectedNeighborhoodId } from './state.js';
 
 let map = null;
 
@@ -568,6 +568,16 @@ export function closeDetailsPanel() {
 
   panel.classList.remove('open');
   mapContainer.classList.remove('panel-open');
+
+  // Clear selection state and remove highlight
+  const selectedId = getSelectedNeighborhoodId();
+  if (selectedId !== null && map) {
+    map.setFeatureState(
+      { source: 'neighborhoods', id: selectedId },
+      { selected: false }
+    );
+    setSelectedNeighborhoodId(null);
+  }
 
   // Unfade all features when closing panel
   if (map) {
