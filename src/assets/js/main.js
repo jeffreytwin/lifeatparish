@@ -4,7 +4,7 @@ import { fetchFloorPlans, fetchHousesForSale, fetchNeighborhoods } from './modul
 import { closeDetailsPanel, initDetailsPanel, showNeighborhoodDetails } from './modules/details-panel.js';
 import { applyFilters as applyFiltersModule, setupFilters, updateFilterUI } from './modules/filters.js';
 import { createPopup, fetchNeighborhoodGeojson, fitMapToAllNeighborhoods, getEnhancedGeojson, loadNeighborhoodsGeojson, setupMapInteractions } from './modules/map.js';
-import { getHousesForSale, getNeighborhoodsData, getSelectedNeighborhoodId, setHousesForSale, setNeighborhoodsData, setSelectedNeighborhoodId, setVillagesWithFloorPlans } from './modules/state.js';
+import { getHousesForSale, getNeighborhoodsData, getSelectedNeighborhoodId, setFloorPlans, setHousesForSale, setNeighborhoodsData, setSelectedNeighborhoodId, setVillagesWithFloorPlans } from './modules/state.js';
 
 const neighborhoodGeojson = await fetchNeighborhoodGeojson()
 
@@ -279,13 +279,16 @@ fetchNeighborhoods().then(neighborhoods => {
 
 // Fetch floor plans to determine which neighborhoods have new construction
 // This MUST complete before loading map layers
-fetchFloorPlans().then(villagesSet => {
-  setVillagesWithFloorPlans(villagesSet);
-  console.log(`Loaded ${villagesSet.size} neighborhoods with new construction`);
+fetchFloorPlans().then(result => {
+  // Store both the full array and the Set of village IDs
+  setFloorPlans(result.plans);
+  setVillagesWithFloorPlans(result.villageIds);
+  console.log(`✓ Loaded ${result.villageIds.size} neighborhoods with new construction`);
   floorPlansLoaded = true;
   initializeMapIfReady();
 }).catch(error => {
   console.error('Error fetching floor plans:', error);
+  setFloorPlans([]);
   setVillagesWithFloorPlans(new Set());
   floorPlansLoaded = true;
   initializeMapIfReady();

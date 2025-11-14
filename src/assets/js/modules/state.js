@@ -117,3 +117,26 @@ export function getVillagesWithFloorPlans() {
 export function setVillagesWithFloorPlans(villages) {
   villagesWithFloorPlans = villages;
 }
+
+/**
+ * Floor plans array storage (full floor plan objects)
+ * Used for price range calculations and displaying floor plan details
+ */
+let floorPlans = [];
+
+/**
+ * Get floor plans array
+ * @returns {Array} Array of floor plan objects
+ */
+export function getFloorPlans() {
+  return floorPlans;
+}
+
+/**
+ * Set floor plans array
+ * @param {Array} plans - Array of floor plan objects
+ */
+export function setFloorPlans(plans) {
+  floorPlans = plans;
+  console.log('✓ Floor plans stored in state:', floorPlans.length, 'plans');
+}

@@ -82,9 +82,9 @@ export async function fetchNeighborhoods() {
 }
 
 /**
- * Fetch all floor plans and return a Set of village IDs that have floor plans
+ * Fetch all floor plans and return both the full array and Set of village IDs
  * This determines which neighborhoods have new construction available
- * @returns {Promise<Set<string>>} Set of village IDs with floor plans
+ * @returns {Promise<{plans: Array, villageIds: Set<string>}>} Object containing floor plans array and Set of village IDs
  */
 export async function fetchFloorPlans() {
   let allFloorPlans = [];
@@ -92,26 +92,35 @@ export async function fetchFloorPlans() {
 
   console.log('Fetching floor plans with pagination...');
 
-  // Get first page - only fetch the 'villages' field we need
+  // Get first page - fetch all fields including village, floorPlanPrice
   let result = await wixClient.items
     .query('FloorPlans')
-    .fields('villages')
     .limit(300)
     .find();
 
   pageCount++;
-  console.log(`Page ${pageCount}: Fetched ${result.items.length} floor plans`);
+  console.log(`  Page ${pageCount}: Fetched ${result.items.length} floor plans`);
   allFloorPlans = allFloorPlans.concat(result.items);
 
   // Fetch remaining pages
   while (result.hasNext()) {
     result = await result.next();
     pageCount++;
-    console.log(`Page ${pageCount}: Fetched ${result.items.length} floor plans`);
+    console.log(`  Page ${pageCount}: Fetched ${result.items.length} floor plans`);
     allFloorPlans = allFloorPlans.concat(result.items);
   }
 
   console.log(`✓ Fetched all floor plans: ${allFloorPlans.length} total (${pageCount} pages)`);
+
+  // Log sample floor plan to verify structure
+  if (allFloorPlans.length > 0) {
+    console.log('📋 Sample floor plan structure:', {
+      village: allFloorPlans[0].village,
+      villages: allFloorPlans[0].villages,
+      floorPlanPrice: allFloorPlans[0].floorPlanPrice,
+      floorPlanName: allFloorPlans[0].floorPlanName
+    });
+  }
 
   // Create a Set of unique village IDs that have floor plans
   const villagesWithFloorPlans = new Set(
@@ -120,7 +129,10 @@ export async function fetchFloorPlans() {
       .filter(id => id) // Filter out null/undefined
   );
 
-  console.log(`✓ Found ${villagesWithFloorPlans.size} neighborhoods with floor plans (new construction)`);
+  console.log(`✓ Found ${villagesWithFloorPlans.size} unique neighborhoods with floor plans (new construction)`);
 
-  return villagesWithFloorPlans;
+  return {
+    plans: allFloorPlans,
+    villageIds: villagesWithFloorPlans
+  };
 }
