@@ -114,7 +114,7 @@ export async function fetchFloorPlans() {
 
   // Log sample floor plan to verify structure
   if (allFloorPlans.length > 0) {
-    console.log('📋 Sample floor plan structure:', {
+    console.log('Sample floor plan structure:', {
       village: allFloorPlans[0].village,
       villages: allFloorPlans[0].villages,
       floorPlanPrice: allFloorPlans[0].floorPlanPrice,

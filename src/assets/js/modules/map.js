@@ -3,7 +3,8 @@
  */
 
 import mapboxgl from 'mapbox-gl';
-import { getHousesForSale, getNeighborhoodsData, getVillagesWithFloorPlans } from './state.js';
+import { getFloorPlans, getHousesForSale, getNeighborhoodsData, getVillagesWithFloorPlans } from './state.js';
+import { parsePrice } from './utils.js';
 
 /**
  * Fetch neighborhood GeoJSON data from Wix
@@ -95,42 +96,75 @@ export function hasResaleHomes(neighborhoodName) {
 }
 
 /**
- * Calculate actual price range from houses for sale in a neighborhood
+ * Calculate actual price range from houses for sale AND floor plans in a neighborhood
  * @param {string} neighborhoodName - Name of the neighborhood
- * @returns {string|null} Formatted price range or null if no houses
+ * @returns {string|null} Formatted price range or null if no houses/floor plans
  */
 function calculatePriceRange(neighborhoodName) {
-  const houses = getHousesForSale();
+  console.group(`Calculating price range for: ${neighborhoodName}`);
 
-  // Normalize both the search name and house village names for comparison
+  const houses = getHousesForSale();
+  const floorPlans = getFloorPlans();
+
+  // Normalize the search name for comparison
   const normalizedSearchName = normalizeNeighborhoodName(neighborhoodName);
 
-  // Filter houses in this neighborhood using normalized comparison
+  // === HOUSES FOR SALE PRICES ===
   const neighborhoodHouses = houses.filter(h => {
     const houseVillage = h.village || '';
     const normalizedHouseVillage = normalizeNeighborhoodName(houseVillage);
     return normalizedHouseVillage === normalizedSearchName;
   });
 
-  if (neighborhoodHouses.length === 0) {
-    return null;
-  }
+  console.log(`  Houses found: ${neighborhoodHouses.length}`);
 
-  // Extract prices (use listingPricePure which is the numeric value)
-  const prices = neighborhoodHouses
+  // Extract house prices (use listingPricePure which is the numeric value)
+  const housePrices = neighborhoodHouses
     .map(h => h.listingPricePure)
     .filter(p => p && !isNaN(p));
 
-  if (prices.length === 0) {
+  console.log(`  House prices:`, housePrices.slice(0, 3), housePrices.length > 3 ? `... (${housePrices.length} total)` : '');
+
+  // === FLOOR PLAN PRICES ===
+  const neighborhoodFloorPlans = floorPlans.filter(fp => {
+    const fpVillage = fp.village || '';
+    const normalizedFpVillage = normalizeNeighborhoodName(fpVillage);
+    return normalizedFpVillage === normalizedSearchName;
+  });
+
+  console.log(`  Floor plans found: ${neighborhoodFloorPlans.length}`);
+
+  // Extract and parse floor plan prices
+  const rawFloorPlanPrices = neighborhoodFloorPlans.map(fp => fp.floorPlanPrice);
+  console.log(`  Floor plan prices (raw):`, rawFloorPlanPrices.slice(0, 3), rawFloorPlanPrices.length > 3 ? `... (${rawFloorPlanPrices.length} total)` : '');
+
+  const floorPlanPrices = neighborhoodFloorPlans
+    .map(fp => parsePrice(fp.floorPlanPrice))
+    .filter(p => p !== null && !isNaN(p));
+
+  console.log(`  Floor plan prices (parsed):`, floorPlanPrices.slice(0, 3), floorPlanPrices.length > 3 ? `... (${floorPlanPrices.length} total)` : '');
+
+  // === COMBINE ALL PRICES ===
+  const allPrices = [...housePrices, ...floorPlanPrices];
+
+  console.log(`  Combined prices: ${allPrices.length} total (${housePrices.length} houses + ${floorPlanPrices.length} floor plans)`);
+
+  if (allPrices.length === 0) {
+    console.log(`  ❌ No prices found`);
+    console.groupEnd();
     return null;
   }
 
-  const minPrice = Math.min(...prices);
-  const maxPrice = Math.max(...prices);
+  const minPrice = Math.min(...allPrices);
+  const maxPrice = Math.max(...allPrices);
+
+  console.log(`  Raw min: $${minPrice.toLocaleString()}, Raw max: $${maxPrice.toLocaleString()}`);
 
   // Round min down to nearest 100K, max up to nearest 100K
   const roundedMin = Math.floor(minPrice / 100000) * 100000;
   const roundedMax = Math.ceil(maxPrice / 100000) * 100000;
+
+  console.log(`  Rounded min: $${roundedMin.toLocaleString()}, Rounded max: $${roundedMax.toLocaleString()}`);
 
   // Format prices in thousands (e.g., "$300K - $500K")
   const formatPrice = (price) => {
@@ -142,11 +176,17 @@ function calculatePriceRange(neighborhoodName) {
     return `$${price / 1000}K`;
   };
 
+  let finalRange;
   if (roundedMin === roundedMax) {
-    return formatPrice(roundedMin);
+    finalRange = formatPrice(roundedMin);
+  } else {
+    finalRange = `${formatPrice(roundedMin)} - ${formatPrice(roundedMax)}`;
   }
 
-  return `${formatPrice(roundedMin)} - ${formatPrice(roundedMax)}`;
+  console.log(`  ✓ Final range: ${finalRange}`);
+  console.groupEnd();
+
+  return finalRange;
 }
 
 /**
@@ -327,11 +367,33 @@ export function loadNeighborhoodsGeojson(map, geojson) {
           new_construction: hasNew, // Check using original for matching
           has_resale_homes: hasResales, // Check if neighborhood has resale homes
           amenities: amenities, // Use Wix amenitiesTags
-          priceRange: calculatedPriceRange // Actual price range from houses
+          priceRange: calculatedPriceRange // Actual price range from houses + floor plans
         }
       };
     })
   };
+
+  // Log summary of price ranges
+  console.group('Price Range Summary');
+  const withPrices = enhancedNeighborhoodGeojson.features.filter(f => f.properties.priceRange);
+  const withoutPrices = enhancedNeighborhoodGeojson.features.filter(f => !f.properties.priceRange);
+
+  console.log(`✓ Neighborhoods with prices: ${withPrices.length}/${enhancedNeighborhoodGeojson.features.length}`);
+  console.log(`❌ Neighborhoods without prices: ${withoutPrices.length}`);
+
+  if (withoutPrices.length > 0) {
+    console.log('Neighborhoods missing price data:', withoutPrices.map(f => f.properties.neighborhood));
+  }
+
+  console.table(
+    enhancedNeighborhoodGeojson.features.map(f => ({
+      Neighborhood: f.properties.neighborhood,
+      'Price Range': f.properties.priceRange || 'NO RANGE',
+      'New Construction': f.properties.new_construction ? 'Yes' : 'No',
+      'Has Resales': f.properties.has_resale_homes ? 'Yes' : 'No'
+    }))
+  );
+  console.groupEnd();
 
   // add the polygons
   map.addSource('neighborhoods', {
@@ -471,69 +533,69 @@ export function setupMapInteractions(map, popup, getSelectedId, setSelectedId, s
   // Hover effect - brighten polygon and show tooltip (desktop only)
   if (!isTouchDevice) {
     map.on('mousemove', 'neighborhood-fills', (e) => {
-    if (e.features.length > 0) {
-      if (hoveredNeighborhoodId !== null) {
+      if (e.features.length > 0) {
+        if (hoveredNeighborhoodId !== null) {
+          map.setFeatureState(
+            { source: 'neighborhoods', id: hoveredNeighborhoodId },
+            { hover: false }
+          );
+        }
+        hoveredNeighborhoodId = e.features[0].id;
         map.setFeatureState(
           { source: 'neighborhoods', id: hoveredNeighborhoodId },
-          { hover: false }
+          { hover: true }
         );
-      }
-      hoveredNeighborhoodId = e.features[0].id;
-      map.setFeatureState(
-        { source: 'neighborhoods', id: hoveredNeighborhoodId },
-        { hover: true }
-      );
 
-      // Show popup tooltip
-      const properties = e.features[0].properties;
-      const coordinates = e.lngLat;
+        // Show popup tooltip
+        const properties = e.features[0].properties;
+        const coordinates = e.lngLat;
 
-      // Determine color based on new_construction status (dynamically checked)
-      const isNewConstruction = hasNewConstruction(properties.neighborhood);
-      const themeColor = isNewConstruction ? '#10b981' : '#676ACE'; // Green for new construction, purple for resale
+        // Determine color based on new_construction status (dynamically checked)
+        const isNewConstruction = hasNewConstruction(properties.neighborhood);
+        const themeColor = isNewConstruction ? '#10b981' : '#676ACE'; // Green for new construction, purple for resale
 
-      // Find matching neighborhood data
-      const neighborhoodData = findNeighborhoodData(properties.neighborhood);
-      // Optimized for popup: 560x320 (2x for retina) - Wix auto-optimizes quality and format
-      const imageUrl = neighborhoodData ? convertWixImageUrl(neighborhoodData.topBackgroundImage, 560, 320) : null;
+        // Find matching neighborhood data
+        const neighborhoodData = findNeighborhoodData(properties.neighborhood);
+        // Optimized for popup: 560x320 (2x for retina) - Wix auto-optimizes quality and format
+        const imageUrl = neighborhoodData ? convertWixImageUrl(neighborhoodData.topBackgroundImage, 560, 320) : null;
 
-      // Build popup HTML with enhanced styling
-      const priceText = properties.priceRange ? properties.priceRange : '';
-      const constructionStatus = isNewConstruction ? 'New Construction' : '';
+        // Build popup HTML with enhanced styling
+        const priceText = properties.priceRange ? properties.priceRange : '';
+        const constructionStatus = isNewConstruction ? 'New Construction' : '';
 
-      // Build the popup content
-      const popupContainer = document.createElement('div');
-      popupContainer.style.width = '280px';
+        // Build the popup content
+        const popupContainer = document.createElement('div');
+        popupContainer.style.width = '280px';
 
-      // Add image container with shimmer if image exists
-      if (imageUrl) {
-        const imageWrapper = document.createElement('div');
-        imageWrapper.style.cssText = 'position: relative; width: 280px; height: 160px;';
+        // Add image container with shimmer if image exists
+        if (imageUrl) {
+          const imageWrapper = document.createElement('div');
+          imageWrapper.style.cssText = 'position: relative; width: 280px; height: 160px;';
 
-        const { container } = createImageWithLoader(
-          imageUrl,
-          properties.neighborhood,
-          'width: 280px; height: 160px; object-fit: cover; display: block;',
-          'width: 280px; height: 160px;',
-          imageCache
-        );
-        imageWrapper.appendChild(container);
+          const { container } = createImageWithLoader(
+            imageUrl,
+            properties.neighborhood,
+            'width: 280px; height: 160px; object-fit: cover; display: block;',
+            'width: 280px; height: 160px;',
+            imageCache
+          );
+          imageWrapper.appendChild(container);
 
-        // Add New Construction badge if applicable
-        if (isNewConstruction) {
-          const badge = document.createElement('div');
-          badge.style.cssText = 'position: absolute; top: 0.75rem; left: 0.75rem; background: #10b981; color: white; padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.625rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.025em; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);';
-          badge.textContent = 'New Construction';
-          imageWrapper.appendChild(badge);
+          // Add New Construction badge if applicable
+          if (isNewConstruction) {
+            const badge = document.createElement('div');
+            badge.style.cssText = 'position: absolute; top: 0.75rem; left: 0.75rem; background: #10b981; color: white; padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.625rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.025em; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);';
+            badge.textContent = 'New Construction';
+            imageWrapper.appendChild(badge);
+          }
+
+          popupContainer.appendChild(imageWrapper);
         }
 
-        popupContainer.appendChild(imageWrapper);
-      }
-
-      // Add content section
-      const contentDiv = document.createElement('div');
-      contentDiv.style.cssText = 'padding: 1rem; width: 280px; box-sizing: border-box;';
-      contentDiv.innerHTML = `
+        // Add content section
+        const contentDiv = document.createElement('div');
+        contentDiv.style.cssText = 'padding: 1rem; width: 280px; box-sizing: border-box;';
+        contentDiv.innerHTML = `
         <h3 style="font-weight: 700; font-size: 1.125rem; color: #111827; margin-bottom: 0.5rem; border-bottom: 2px solid ${themeColor}; padding-bottom: 0.5rem;">${properties.neighborhood || 'Neighborhood'}</h3>
         <div style="display: flex; flex-direction: column; gap: 0.5rem;">
           ${priceText ? `
@@ -554,21 +616,21 @@ export function setupMapInteractions(map, popup, getSelectedId, setSelectedId, s
         </div>
       `;
 
-      popupContainer.appendChild(contentDiv);
+        popupContainer.appendChild(contentDiv);
 
-      // Add shimmer animation style
-      const style = document.createElement('style');
-      style.textContent = `
+        // Add shimmer animation style
+        const style = document.createElement('style');
+        style.textContent = `
         @keyframes shimmer {
           0% { background-position: -200% 0; }
           100% { background-position: 200% 0; }
         }
       `;
-      document.head.appendChild(style);
+        document.head.appendChild(style);
 
-      popup.setLngLat(coordinates).setDOMContent(popupContainer).addTo(map);
-    }
-  });
+        popup.setLngLat(coordinates).setDOMContent(popupContainer).addTo(map);
+      }
+    });
 
     map.on('mouseleave', 'neighborhood-fills', () => {
       if (hoveredNeighborhoodId !== null) {

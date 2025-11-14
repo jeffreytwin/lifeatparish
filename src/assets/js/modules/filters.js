@@ -573,8 +573,8 @@ export function applyFilters(map, geojson, getSelectedId, setSelectedId, closeDe
   const matchedFeatures = [];
   const visibleFeatureIds = [];
 
-  console.log('🗺️ Starting neighborhood filtering. Total features:', features.length);
-  console.log('🏘️ matchingVillages:', matchingVillages === null ? 'null (no house filters)' : `Set with ${matchingVillages.size} items`);
+  console.log('Starting neighborhood filtering. Total features:', features.length);
+  console.log('matchingVillages:', matchingVillages === null ? 'null (no house filters)' : `Set with ${matchingVillages.size} items`);
 
   features.forEach((feature, index) => {
     const props = feature.properties;
@@ -610,7 +610,7 @@ export function applyFilters(map, geojson, getSelectedId, setSelectedId, closeDe
       // If house filters found zero matches, hide all neighborhoods
       if (matchingVillages.size === 0) {
         matches = false;
-        if (index < 3) console.log(`❌ "${neighborhoodName}": Hidden (zero houses match house filters)`);
+        if (index < 3) console.log(`"${neighborhoodName}": Hidden (zero houses match house filters)`);
       } else {
         matches = matches && matchingVillages.has(neighborhoodName);
         if (index < 3) console.log(`"${neighborhoodName}": Before house filter=${beforeHouseFilter}, In village list=${matchingVillages.has(neighborhoodName)}, Final=${matches}`);
@@ -624,7 +624,7 @@ export function applyFilters(map, geojson, getSelectedId, setSelectedId, closeDe
     }
   });
 
-  console.log(`🎯 Final result: ${matchedCount} neighborhoods visible, ${visibleFeatureIds.length} feature IDs`);
+  console.log(`Final result: ${matchedCount} neighborhoods visible, ${visibleFeatureIds.length} feature IDs`);
 
   updateMapVisibility(map, visibleFeatureIds);
   updateFilterUICallback(matchedCount, geojson);

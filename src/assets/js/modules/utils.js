@@ -62,7 +62,7 @@ export function debounce(func, wait) {
 
 // Test parsePrice function with logging (will run on module load)
 if (typeof window !== 'undefined') {
-  console.group('🧪 Testing parsePrice utility');
+  console.group('Testing parsePrice utility');
   const testCases = [
     ['$249,999', 249999],
     ['$1.5M', 1500000],
