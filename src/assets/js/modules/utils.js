@@ -15,6 +15,34 @@ export function formatPrice(value) {
 }
 
 /**
+ * Parse price string to numeric value
+ * Handles formats: "$249,999", "$1.5M", "$2M", etc.
+ * @param {string} priceString - Price string to parse
+ * @returns {number|null} Numeric price value or null if invalid
+ */
+export function parsePrice(priceString) {
+  if (!priceString || typeof priceString !== 'string') {
+    return null;
+  }
+
+  // Remove $ and spaces
+  let cleaned = priceString.replace(/\$|,|\s/g, '');
+
+  // Check for M (millions) or K (thousands)
+  if (cleaned.includes('M')) {
+    const value = parseFloat(cleaned.replace('M', ''));
+    return isNaN(value) ? null : value * 1000000;
+  } else if (cleaned.includes('K')) {
+    const value = parseFloat(cleaned.replace('K', ''));
+    return isNaN(value) ? null : value * 1000;
+  } else {
+    // Plain number
+    const value = parseFloat(cleaned);
+    return isNaN(value) ? null : value;
+  }
+}
+
+/**
  * Debounce function to limit how often a function can be called
  * @param {Function} func - Function to debounce
  * @param {number} wait - Wait time in milliseconds
@@ -30,4 +58,28 @@ export function debounce(func, wait) {
     clearTimeout(timeout);
     timeout = setTimeout(later, wait);
   };
+}
+
+// Test parsePrice function with logging (will run on module load)
+if (typeof window !== 'undefined') {
+  console.group('🧪 Testing parsePrice utility');
+  const testCases = [
+    ['$249,999', 249999],
+    ['$1.5M', 1500000],
+    ['$2M', 2000000],
+    ['$459,250', 459250],
+    ['$3,490,000', 3490000],
+    ['$500K', 500000],
+    ['invalid', null],
+    [null, null]
+  ];
+
+  testCases.forEach(([input, expected]) => {
+    const result = parsePrice(input);
+    const passed = result === expected;
+    console.log(
+      `${passed ? '✓' : '❌'} parsePrice("${input}") = ${result} ${passed ? '' : `(expected ${expected})`}`
+    );
+  });
+  console.groupEnd();
 }
