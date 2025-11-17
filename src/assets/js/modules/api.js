@@ -90,11 +90,13 @@ export async function fetchFloorPlans() {
   let allFloorPlans = [];
   let pageCount = 0;
 
-  console.log('Fetching floor plans with pagination...');
+  console.log('Fetching floor plans with pagination (quickMoveInAvailable=true only)...');
 
   // Get first page - fetch all fields including village, floorPlanPrice
+  // Filter for only quick move-in available properties
   let result = await wixClient.items
     .query('FloorPlans')
+    .eq('quickMoveInAvailable', true)
     .limit(300)
     .find();
 

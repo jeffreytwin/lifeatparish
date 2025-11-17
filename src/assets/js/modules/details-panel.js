@@ -3,7 +3,7 @@
  */
 
 import { normalizeHomeType } from './filters.js';
-import { convertWixImageUrl, createImageWithLoader, hasNewConstruction, unfadeAllFeatures } from './map.js';
+import { convertWixImageUrl, createImageWithLoader, fitMapToAllNeighborhoods, getEnhancedGeojson, hasNewConstruction, unfadeAllFeatures } from './map.js';
 import { defaultPriceRange, filterState, getHousesForSale, getNeighborhoodsData, getSelectedNeighborhoodId, setSelectedNeighborhoodId } from './state.js';
 
 let map = null;
@@ -582,6 +582,12 @@ export function closeDetailsPanel() {
   // Unfade all features when closing panel
   if (map) {
     unfadeAllFeatures(map);
+  }
+
+  // Fit map to all neighborhoods
+  const geojson = getEnhancedGeojson();
+  if (map && geojson) {
+    fitMapToAllNeighborhoods(map, geojson);
   }
 
   // Resize map to fit new container size

@@ -196,12 +196,15 @@ function setupPostMessageListener() {
 // init mapbox
 mapboxgl.accessToken = window.config.mapboxAccessToken;
 
+// Detect if mobile device
+const isMobileDevice = window.innerWidth < 768;
+
 const map = new mapboxgl.Map({
   container: 'map',
   style: 'mapbox://styles/mapbox/light-v11',
   center: [-82.51, 27.58], // Parrish, FL - wider view showing beach proximity
   zoom: 11.5,
-  cooperativeGestures: true
+  cooperativeGestures: !isMobileDevice // Disable cooperative gestures on mobile (allow one-finger pan)
 });
 
 // Track when critical data is loaded

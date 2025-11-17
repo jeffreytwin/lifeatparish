@@ -21,7 +21,7 @@ export async function fetchNeighborhoodGeojson() {
  * Handles discrepancies in naming between the two data sources
  */
 const NEIGHBORHOOD_NAME_MAPPING = {
-  'Oakfield': 'Oakfield Lakes',
+  'Oakfield Lakes': 'Oakfield', // Display as 'Oakfield' on map
   'Del Webb BayView': 'Del Webb at Bayview',
   'Isles at BayView': 'Isles at Bayview',
   'The Islands on the Manatee River': 'The Islands on The Manatee River'
