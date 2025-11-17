@@ -72,8 +72,41 @@ export async function fetchHousesForSale() {
  * @returns {Promise<Array>} Array of neighborhood items
  */
 export async function fetchNeighborhoods() {
+  // Define only the fields we need to reduce payload size
+  const requiredFields = [
+    'link-copy-of-neighborhood-title', // Used for neighborhood page URLs
+    'villageTitle',// Used for matching neighborhoods
+    'topOfPageBackground',// Header image
+    'homeTypes',// Home type specs
+    'houseIconImage',// Home type icon
+    'bedroomRange',// Bedroom specs
+    'garageSizeRange',// Garage specs
+    'squareFeet',// Square feet specs
+    'youTubeVideo',// YouTube video embed
+    'villageShortDescription',// Neighborhood description
+    'amenitiesTags',// List of amenity tags
+    // Amenity images (only fetched if corresponding amenity tag exists)
+    'clubhouseImage',
+    'poolImage',
+    'fitnessCenterImage',
+    'gymImage',
+    'pickleballImage',
+    'bocceBallImage',
+    'dogParkImage',
+    'lifestyleDirectorImage',
+    'totLotImage',
+    'walkingPathsImage',
+    'trailsImage',
+    'tennisImage',
+    'golfImage',
+    'gatedImage',
+    'ageRestrictedImage',
+    'maintenanceIncludedImage'
+  ];
+
   const result = await wixClient.items
     .query('HousesforSale-DynamicPages')
+    .fields(...requiredFields)
     .limit(300)
     .find();
 
@@ -92,11 +125,20 @@ export async function fetchFloorPlans() {
 
   console.log('Fetching floor plans with pagination (quickMoveInAvailable=true only)...');
 
-  // Get first page - fetch all fields including village, floorPlanPrice
+  // Define only the fields we need to reduce payload size
+  const requiredFields = [
+    'villages',// Used for creating Set of village IDs
+    'village',// Used for matching neighborhoods
+    'floorPlanPrice', // Used for price range calculations
+    'floorPlanName' // Used for debugging/logging
+  ];
+
+  // Get first page - fetch only required fields
   // Filter for only quick move-in available properties
   let result = await wixClient.items
     .query('FloorPlans')
     .eq('quickMoveInAvailable', true)
+    .fields(...requiredFields)
     .limit(300)
     .find();
 
