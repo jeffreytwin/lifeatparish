@@ -76,7 +76,8 @@ export async function fetchNeighborhoods() {
   const requiredFields = [
     'link-copy-of-neighborhood-title', // Used for neighborhood page URLs
     'villageTitle',// Used for matching neighborhoods
-    'topOfPageBackground',// Header image
+    'topOfPageBackground',// Header image (details panel)
+    'topBackgroundImage',// Background image (hover popup)
     'homeTypes',// Home type specs
     'houseIconImage',// Home type icon
     'bedroomRange',// Bedroom specs
