@@ -194,6 +194,7 @@ function setupPostMessageListener() {
   const ALLOWED_ORIGINS = [
     'https://www.lifeatparrish.com',
     'https://lifeatparrish.com',
+    'https://lifeatparrish.web.app/',
     // Allow localhost for development (any port)
     ...(window.location.hostname === 'localhost' ? ['http://localhost:5173', 'http://localhost:4173'] : [])
   ];
