@@ -22,7 +22,7 @@ export async function fetchHousesForSale() {
   let allHouses = [];
   let pageCount = 0;
 
-  console.log('Fetching houses for sale with pagination...');
+  // console.log('Fetching houses for sale with pagination...');
 
   // Define only the fields we need to reduce payload size
   const requiredFields = [
@@ -51,18 +51,18 @@ export async function fetchHousesForSale() {
     .find();
 
   pageCount++;
-  console.log(`Page ${pageCount}: Fetched ${result.items.length} houses`);
+  // console.log(`Page ${pageCount}: Fetched ${result.items.length} houses`);
   allHouses = allHouses.concat(result.items);
 
   // Fetch remaining pages
   while (result.hasNext()) {
     result = await result.next();
     pageCount++;
-    console.log(`Page ${pageCount}: Fetched ${result.items.length} houses`);
+    // console.log(`Page ${pageCount}: Fetched ${result.items.length} houses`);
     allHouses = allHouses.concat(result.items);
   }
 
-  console.log(`✓ Fetched all houses: ${allHouses.length} total (${pageCount} pages)`);
+  // console.log(`✓ Fetched all houses: ${allHouses.length} total (${pageCount} pages)`);
 
   return allHouses;
 }
@@ -111,7 +111,21 @@ export async function fetchNeighborhoods() {
     .limit(300)
     .find();
 
-  console.log('items', result);
+  console.group('DEBUG: Fetch Neighborhoods');
+  console.log('Total neighborhoods fetched:', result.items?.length);
+
+  // Check first 3 neighborhoods for amenitiesTags field
+  result.items?.slice(0, 3).forEach((item, index) => {
+    console.log(`Neighborhood ${index} (${item.villageTitle}):`, {
+      hasAmenitiesTags: 'amenitiesTags' in item,
+      amenitiesTags: item.amenitiesTags,
+      isArray: Array.isArray(item.amenitiesTags),
+      length: item.amenitiesTags?.length
+    });
+  });
+
+  console.groupEnd();
+  // console.log('items', result);
   return result.items;
 }
 
@@ -124,7 +138,7 @@ export async function fetchFloorPlans() {
   let allFloorPlans = [];
   let pageCount = 0;
 
-  console.log('Fetching floor plans with pagination (quickMoveInAvailable=true only)...');
+  // console.log('Fetching floor plans with pagination (quickMoveInAvailable=true only)...');
 
   // Define only the fields we need to reduce payload size
   const requiredFields = [
@@ -144,28 +158,28 @@ export async function fetchFloorPlans() {
     .find();
 
   pageCount++;
-  console.log(`  Page ${pageCount}: Fetched ${result.items.length} floor plans`);
+  // console.log(`  Page ${pageCount}: Fetched ${result.items.length} floor plans`);
   allFloorPlans = allFloorPlans.concat(result.items);
 
   // Fetch remaining pages
   while (result.hasNext()) {
     result = await result.next();
     pageCount++;
-    console.log(`  Page ${pageCount}: Fetched ${result.items.length} floor plans`);
+    // console.log(`  Page ${pageCount}: Fetched ${result.items.length} floor plans`);
     allFloorPlans = allFloorPlans.concat(result.items);
   }
 
-  console.log(`✓ Fetched all floor plans: ${allFloorPlans.length} total (${pageCount} pages)`);
+  // console.log(`✓ Fetched all floor plans: ${allFloorPlans.length} total (${pageCount} pages)`);
 
   // Log sample floor plan to verify structure
-  if (allFloorPlans.length > 0) {
-    console.log('Sample floor plan structure:', {
-      village: allFloorPlans[0].village,
-      villages: allFloorPlans[0].villages,
-      floorPlanPrice: allFloorPlans[0].floorPlanPrice,
-      floorPlanName: allFloorPlans[0].floorPlanName
-    });
-  }
+  // if (allFloorPlans.length > 0) {
+  //   console.log('Sample floor plan structure:', {
+  //     village: allFloorPlans[0].village,
+  //     villages: allFloorPlans[0].villages,
+  //     floorPlanPrice: allFloorPlans[0].floorPlanPrice,
+  //     floorPlanName: allFloorPlans[0].floorPlanName
+  //   });
+  // }
 
   // Create a Set of unique village IDs that have floor plans
   const villagesWithFloorPlans = new Set(
@@ -174,7 +188,7 @@ export async function fetchFloorPlans() {
       .filter(id => id) // Filter out null/undefined
   );
 
-  console.log(`✓ Found ${villagesWithFloorPlans.size} unique neighborhoods with floor plans (new construction)`);
+  // console.log(`✓ Found ${villagesWithFloorPlans.size} unique neighborhoods with floor plans (new construction)`);
 
   return {
     plans: allFloorPlans,

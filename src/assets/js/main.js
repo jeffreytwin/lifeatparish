@@ -256,10 +256,21 @@ function initializeMapIfReady() {
     // Check for neighborhood parameter in URL and auto-select if present
     const neighborhoodParam = getNeighborhoodFromUrl();
     if (neighborhoodParam) {
-      // Wait a bit for map to fully render before selecting
+      // Wait for map layers to be ready before selecting (no arbitrary timeout)
+      const checkLayersReady = setInterval(() => {
+        if (map.getSource('neighborhoods')) {
+          clearInterval(checkLayersReady);
+          console.log('Map layers ready, auto-selecting neighborhood:', neighborhoodParam);
+          selectNeighborhoodByName(neighborhoodParam);
+        }
+      }, 100); // Check every 100ms
+
+      // Safety timeout: give up after 5 seconds
       setTimeout(() => {
+        clearInterval(checkLayersReady);
+        console.warn('Timeout waiting for map layers, attempting selection anyway');
         selectNeighborhoodByName(neighborhoodParam);
-      }, 500);
+      }, 5000);
     }
 
     // Setup postMessage listener for parent window communication
@@ -268,11 +279,26 @@ function initializeMapIfReady() {
 }
 
 // Fetch and store neighborhoods data
+console.log('Fetching neighborhoods... (timestamp:', Date.now(), ')');
 fetchNeighborhoods().then(neighborhoods => {
+  console.log('Neighborhoods fetched (timestamp:', Date.now(), ')');
   setNeighborhoodsData(neighborhoods || []);
-  console.log(`Loaded ${neighborhoods?.length || 0} neighborhoods from Wix`);
+  // console.log(`Loaded ${neighborhoods?.length || 0} neighborhoods from Wix`);
   neighborhoodsLoaded = true;
   initializeMapIfReady();
+
+  // Try to initialize filters if enhanced geojson is ready and filters not yet initialized
+  console.log('Neighborhoods fetch complete. Checking conditions:', {
+    mapLoaded: map.loaded(),
+    enhancedGeojson: !!getEnhancedGeojson(),
+    neighborhoodsCount: neighborhoods?.length || 0,
+    filtersInitialized: filtersInitialized
+  });
+
+  // Check enhancedGeojson instead of map.loaded() because geojson is the actual requirement
+  if (getEnhancedGeojson() && !filtersInitialized) {
+    initializeFilters();
+  }
 }).catch(error => {
   console.error('Error fetching neighborhoods:', error);
   setNeighborhoodsData([]);
@@ -286,7 +312,7 @@ fetchFloorPlans().then(result => {
   // Store both the full array and the Set of village IDs
   setFloorPlans(result.plans);
   setVillagesWithFloorPlans(result.villageIds);
-  console.log(`✓ Loaded ${result.villageIds.size} neighborhoods with new construction`);
+  // console.log(`✓ Loaded ${result.villageIds.size} neighborhoods with new construction`);
   floorPlansLoaded = true;
   initializeMapIfReady();
 }).catch(error => {
@@ -300,7 +326,7 @@ fetchFloorPlans().then(result => {
 // Fetch houses and store in state
 fetchHousesForSale().then(houses => {
   setHousesForSale(houses || []);
-  console.log(`Loaded ${houses?.length || 0} houses for sale`);
+  // console.log(`Loaded ${houses?.length || 0} houses for sale`);
 
   // Hide loading overlay
   const loadingOverlay = document.getElementById('sidebar-loading');
@@ -309,7 +335,16 @@ fetchHousesForSale().then(houses => {
   }
 
   // Setup filters once houses are loaded
-  if (map.loaded()) {
+  console.log('Houses fetch complete. Checking conditions:', {
+    mapLoaded: map.loaded(),
+    enhancedGeojson: !!getEnhancedGeojson(),
+    neighborhoodsCount: getNeighborhoodsData().length,
+    housesCount: houses?.length || 0,
+    filtersInitialized: filtersInitialized
+  });
+
+  // Check enhancedGeojson instead of map.loaded() because geojson is the actual requirement
+  if (getEnhancedGeojson() && !filtersInitialized) {
     initializeFilters();
   }
 }).catch(error => {
@@ -400,9 +435,12 @@ map.on('load', () => {
 });
 
 let filtersInitialized = false;
+let initializationInProgress = false;
 
 function initializeFilters() {
-  if (filtersInitialized) {
+  // Prevent concurrent initialization attempts
+  if (initializationInProgress) {
+    console.log('Initialization already in progress, skipping duplicate call');
     return;
   }
 
@@ -410,21 +448,55 @@ function initializeFilters() {
   const enhancedGeojson = getEnhancedGeojson();
   const neighborhoods = getNeighborhoodsData();
 
-  if (!enhancedGeojson) {
-    console.error('Cannot initialize filters: Enhanced GeoJSON not available');
+  // Check if already initialized AND has data (prevent re-init if already complete)
+  if (filtersInitialized && houses.length > 0) {
+    console.log('Filters already initialized with data, skipping');
     return;
   }
 
-  filtersInitialized = true;
+  // Set lock before any async-like operations
+  initializationInProgress = true;
 
-  // Wrapper for applyFilters that provides all necessary dependencies
-  const applyFiltersWrapper = () => {
-    applyFiltersModule(map, enhancedGeojson, getSelectedNeighborhoodId, setSelectedNeighborhoodId, closeDetailsPanel, updateFilterUI);
-  };
+  if (!enhancedGeojson) {
+    console.error('Cannot initialize filters: Enhanced GeoJSON not available');
+    initializationInProgress = false; // Release lock on failure
+    return;
+  }
 
-  // Setup filters with houses data, neighborhoods data, and enhanced GeoJSON
-  setupFilters(enhancedGeojson, houses, neighborhoods, applyFiltersWrapper);
+  // Wait for neighborhoods data to be loaded before initializing filters
+  if (!neighborhoods || neighborhoods.length === 0) {
+    console.warn('Cannot initialize filters: Neighborhoods data not loaded yet');
+    initializationInProgress = false; // Release lock on failure
+    return;
+  }
 
+  // Wait for houses data to be loaded (critical for home types filter)
+  if (!houses || houses.length === 0) {
+    console.warn('Cannot initialize filters: Houses data not loaded yet');
+    initializationInProgress = false; // Release lock on failure
+    return;
+  }
+
+  console.log('Initializing filters with', neighborhoods.length, 'neighborhoods and', houses.length, 'houses');
+
+  try {
+    // Wrapper for applyFilters that provides all necessary dependencies
+    const applyFiltersWrapper = () => {
+      applyFiltersModule(map, enhancedGeojson, getSelectedNeighborhoodId, setSelectedNeighborhoodId, closeDetailsPanel, updateFilterUI);
+    };
+
+    // Setup filters with houses data, neighborhoods data, and enhanced GeoJSON
+    setupFilters(enhancedGeojson, houses, neighborhoods, applyFiltersWrapper);
+
+    // Mark as successfully initialized
+    filtersInitialized = true;
+    console.log('Filters initialization complete');
+  } catch (error) {
+    console.error('Error during filter initialization:', error);
+  } finally {
+    // Always release lock
+    initializationInProgress = false;
+  }
 }
 
 // ===== MOBILE SIDEBAR TOGGLE =====

@@ -101,7 +101,6 @@ export function hasResaleHomes(neighborhoodName) {
  * @returns {string|null} Formatted price range or null if no houses/floor plans
  */
 function calculatePriceRange(neighborhoodName) {
-  console.group(`Calculating price range for: ${neighborhoodName}`);
 
   const houses = getHousesForSale();
   const floorPlans = getFloorPlans();
@@ -116,14 +115,10 @@ function calculatePriceRange(neighborhoodName) {
     return normalizedHouseVillage === normalizedSearchName;
   });
 
-  console.log(`  Houses found: ${neighborhoodHouses.length}`);
-
   // Extract house prices (use listingPricePure which is the numeric value)
   const housePrices = neighborhoodHouses
     .map(h => h.listingPricePure)
     .filter(p => p && !isNaN(p));
-
-  console.log(`  House prices:`, housePrices.slice(0, 3), housePrices.length > 3 ? `... (${housePrices.length} total)` : '');
 
   // === FLOOR PLAN PRICES ===
   const neighborhoodFloorPlans = floorPlans.filter(fp => {
@@ -132,39 +127,28 @@ function calculatePriceRange(neighborhoodName) {
     return normalizedFpVillage === normalizedSearchName;
   });
 
-  console.log(`  Floor plans found: ${neighborhoodFloorPlans.length}`);
-
   // Extract and parse floor plan prices
   const rawFloorPlanPrices = neighborhoodFloorPlans.map(fp => fp.floorPlanPrice);
-  console.log(`  Floor plan prices (raw):`, rawFloorPlanPrices.slice(0, 3), rawFloorPlanPrices.length > 3 ? `... (${rawFloorPlanPrices.length} total)` : '');
 
   const floorPlanPrices = neighborhoodFloorPlans
     .map(fp => parsePrice(fp.floorPlanPrice))
     .filter(p => p !== null && !isNaN(p));
 
-  console.log(`  Floor plan prices (parsed):`, floorPlanPrices.slice(0, 3), floorPlanPrices.length > 3 ? `... (${floorPlanPrices.length} total)` : '');
-
   // === COMBINE ALL PRICES ===
   const allPrices = [...housePrices, ...floorPlanPrices];
 
-  console.log(`  Combined prices: ${allPrices.length} total (${housePrices.length} houses + ${floorPlanPrices.length} floor plans)`);
-
   if (allPrices.length === 0) {
-    console.log(`  ❌ No prices found`);
-    console.groupEnd();
+    // console.log(`  ❌ No prices found`);
+    // console.groupEnd();
     return null;
   }
 
   const minPrice = Math.min(...allPrices);
   const maxPrice = Math.max(...allPrices);
 
-  console.log(`  Raw min: $${minPrice.toLocaleString()}, Raw max: $${maxPrice.toLocaleString()}`);
-
   // Round min down to nearest 100K, max up to nearest 100K
   const roundedMin = Math.floor(minPrice / 100000) * 100000;
   const roundedMax = Math.ceil(maxPrice / 100000) * 100000;
-
-  console.log(`  Rounded min: $${roundedMin.toLocaleString()}, Rounded max: $${roundedMax.toLocaleString()}`);
 
   // Format prices in thousands (e.g., "$300K - $500K")
   const formatPrice = (price) => {
@@ -182,9 +166,6 @@ function calculatePriceRange(neighborhoodName) {
   } else {
     finalRange = `${formatPrice(roundedMin)} - ${formatPrice(roundedMax)}`;
   }
-
-  console.log(`  ✓ Final range: ${finalRange}`);
-  console.groupEnd();
 
   return finalRange;
 }
@@ -374,26 +355,26 @@ export function loadNeighborhoodsGeojson(map, geojson) {
   };
 
   // Log summary of price ranges
-  console.group('Price Range Summary');
-  const withPrices = enhancedNeighborhoodGeojson.features.filter(f => f.properties.priceRange);
-  const withoutPrices = enhancedNeighborhoodGeojson.features.filter(f => !f.properties.priceRange);
+  // console.group('Price Range Summary');
+  // const withPrices = enhancedNeighborhoodGeojson.features.filter(f => f.properties.priceRange);
+  // const withoutPrices = enhancedNeighborhoodGeojson.features.filter(f => !f.properties.priceRange);
 
-  console.log(`✓ Neighborhoods with prices: ${withPrices.length}/${enhancedNeighborhoodGeojson.features.length}`);
-  console.log(`❌ Neighborhoods without prices: ${withoutPrices.length}`);
+  // console.log(`✓ Neighborhoods with prices: ${withPrices.length}/${enhancedNeighborhoodGeojson.features.length}`);
+  // console.log(`❌ Neighborhoods without prices: ${withoutPrices.length}`);
 
-  if (withoutPrices.length > 0) {
-    console.log('Neighborhoods missing price data:', withoutPrices.map(f => f.properties.neighborhood));
-  }
+  // if (withoutPrices.length > 0) {
+  //   console.log('Neighborhoods missing price data:', withoutPrices.map(f => f.properties.neighborhood));
+  // }
 
-  console.table(
-    enhancedNeighborhoodGeojson.features.map(f => ({
-      Neighborhood: f.properties.neighborhood,
-      'Price Range': f.properties.priceRange || 'NO RANGE',
-      'New Construction': f.properties.new_construction ? 'Yes' : 'No',
-      'Has Resales': f.properties.has_resale_homes ? 'Yes' : 'No'
-    }))
-  );
-  console.groupEnd();
+  // console.table(
+  //   enhancedNeighborhoodGeojson.features.map(f => ({
+  //     Neighborhood: f.properties.neighborhood,
+  //     'Price Range': f.properties.priceRange || 'NO RANGE',
+  //     'New Construction': f.properties.new_construction ? 'Yes' : 'No',
+  //     'Has Resales': f.properties.has_resale_homes ? 'Yes' : 'No'
+  //   }))
+  // );
+  // console.groupEnd();
 
   // add the polygons
   map.addSource('neighborhoods', {

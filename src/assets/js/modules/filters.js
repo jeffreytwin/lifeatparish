@@ -87,16 +87,49 @@ export function populateHomeTypes(houses, applyFiltersCallback) {
  * @param {Function} applyFiltersCallback - Callback to apply filters
  */
 export function populateAmenities(neighborhoods, applyFiltersCallback) {
+  console.group('🔍 DEBUG: Populate Amenities');
+  console.log('Total neighborhoods received:', neighborhoods?.length);
+
   const amenitiesSet = new Set();
-  neighborhoods.forEach(neighborhood => {
+  let neighborhoodsWithAmenities = 0;
+  let neighborhoodsWithoutAmenities = 0;
+
+  neighborhoods.forEach((neighborhood, index) => {
     const amenities = neighborhood.amenitiesTags;
-    if (Array.isArray(amenities)) {
+
+    if (Array.isArray(amenities) && amenities.length > 0) {
+      neighborhoodsWithAmenities++;
       amenities.forEach(a => amenitiesSet.add(a));
+
+      // Log first 3 neighborhoods with amenities for debugging
+      if (neighborhoodsWithAmenities <= 3) {
+        console.log(`✓ Neighborhood ${index} (${neighborhood.villageTitle}):`, amenities);
+      }
+    } else {
+      neighborhoodsWithoutAmenities++;
+
+      // Log first 3 neighborhoods WITHOUT amenities for debugging
+      if (neighborhoodsWithoutAmenities <= 3) {
+        console.warn(`✗ Neighborhood ${index} (${neighborhood.villageTitle}): NO amenitiesTags`, {
+          hasField: 'amenitiesTags' in neighborhood,
+          isArray: Array.isArray(amenities),
+          value: amenities
+        });
+      }
     }
+  });
+
+  console.log('Summary:', {
+    withAmenities: neighborhoodsWithAmenities,
+    withoutAmenities: neighborhoodsWithoutAmenities,
+    uniqueAmenities: amenitiesSet.size
   });
 
   const list = document.getElementById('amenities-list');
   const sorted = Array.from(amenitiesSet).sort();
+
+  console.log('Final amenities list:', sorted);
+  console.groupEnd();
 
   sorted.forEach(amenity => {
     const label = document.createElement('label');
