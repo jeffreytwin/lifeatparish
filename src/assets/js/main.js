@@ -192,9 +192,9 @@ function setupPostMessageListener() {
 
   // Allowed origins for postMessage communication
   const ALLOWED_ORIGINS = [
-    'https://www.lifeatparrish.com',
-    'https://lifeatparrish.com',
-    'https://lifeatparrish.web.app/',
+    'https://www.lifeatparrish.com/',
+    'https://lifeatparrish.com/',
+    'https://lifeatparrish.web.app',
     // Allow localhost for development (any port)
     ...(window.location.hostname === 'localhost' ? ['http://localhost:5173', 'http://localhost:4173'] : [])
   ];
