@@ -60,26 +60,4 @@ export function debounce(func, wait) {
   };
 }
 
-// Test parsePrice function with logging (will run on module load)
-if (typeof window !== 'undefined') {
-  console.group('Testing parsePrice utility');
-  const testCases = [
-    ['$249,999', 249999],
-    ['$1.5M', 1500000],
-    ['$2M', 2000000],
-    ['$459,250', 459250],
-    ['$3,490,000', 3490000],
-    ['$500K', 500000],
-    ['invalid', null],
-    [null, null]
-  ];
 
-  testCases.forEach(([input, expected]) => {
-    const result = parsePrice(input);
-    const passed = result === expected;
-    console.log(
-      `${passed ? '✓' : '❌'} parsePrice("${input}") = ${result} ${passed ? '' : `(expected ${expected})`}`
-    );
-  });
-  console.groupEnd();
-}

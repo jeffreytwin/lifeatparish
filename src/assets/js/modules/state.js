@@ -138,5 +138,5 @@ export function getFloorPlans() {
  */
 export function setFloorPlans(plans) {
   floorPlans = plans;
-  console.log('✓ Floor plans stored in state:', floorPlans.length, 'plans');
+
 }

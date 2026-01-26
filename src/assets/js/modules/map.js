@@ -101,9 +101,13 @@ export function hasResaleHomes(neighborhoodName) {
  * @returns {string|null} Formatted price range or null if no houses/floor plans
  */
 function calculatePriceRange(neighborhoodName) {
-
+  // Defensive guard: Return null if data not yet loaded (prevents race condition)
   const houses = getHousesForSale();
   const floorPlans = getFloorPlans();
+
+  if (!houses || !floorPlans) {
+    return null; // Data not yet loaded
+  }
 
   // Normalize the search name for comparison
   const normalizedSearchName = normalizeNeighborhoodName(neighborhoodName);
@@ -138,8 +142,7 @@ function calculatePriceRange(neighborhoodName) {
   const allPrices = [...housePrices, ...floorPlanPrices];
 
   if (allPrices.length === 0) {
-    // console.log(`  ❌ No prices found`);
-    // console.groupEnd();
+
     return null;
   }
 
@@ -310,13 +313,12 @@ export function getEnhancedGeojson() {
 }
 
 /**
- * Load GeoJSON data and add map layers
- * @param {mapboxgl.Map} map - The map instance
+ * Enhance GeoJSON with calculated properties
  * @param {Object} geojson - The GeoJSON data
+ * @returns {Object} Enhanced GeoJSON
  */
-export function loadNeighborhoodsGeojson(map, geojson) {
-  // Dynamically set new_construction property, use Wix names, and Wix amenities
-  enhancedNeighborhoodGeojson = {
+function enhanceGeojson(geojson) {
+  return {
     ...geojson,
     features: geojson.features.map(feature => {
       const originalName = feature.properties.neighborhood;
@@ -353,28 +355,39 @@ export function loadNeighborhoodsGeojson(map, geojson) {
       };
     })
   };
+}
+
+/**
+ * Refresh enhanced GeoJSON data (recalculate price ranges after houses load)
+ * @param {mapboxgl.Map} map - The map instance
+ * @param {Object} geojson - The original GeoJSON data
+ */
+export function refreshEnhancedGeojson(map, geojson) {
+  if (!enhancedNeighborhoodGeojson) {
+    return; // Not yet initialized
+  }
+
+  // Recalculate enhanced properties
+  enhancedNeighborhoodGeojson = enhanceGeojson(geojson);
+
+  // Update map source if it exists
+  const source = map.getSource('neighborhoods');
+  if (source) {
+    source.setData(enhancedNeighborhoodGeojson);
+  }
+}
+
+/**
+ * Load GeoJSON data and add map layers
+ * @param {mapboxgl.Map} map - The map instance
+ * @param {Object} geojson - The GeoJSON data
+ */
+export function loadNeighborhoodsGeojson(map, geojson) {
+  // Dynamically set new_construction property, use Wix names, and Wix amenities
+  enhancedNeighborhoodGeojson = enhanceGeojson(geojson);
 
   // Log summary of price ranges
-  // console.group('Price Range Summary');
-  // const withPrices = enhancedNeighborhoodGeojson.features.filter(f => f.properties.priceRange);
-  // const withoutPrices = enhancedNeighborhoodGeojson.features.filter(f => !f.properties.priceRange);
 
-  // console.log(`✓ Neighborhoods with prices: ${withPrices.length}/${enhancedNeighborhoodGeojson.features.length}`);
-  // console.log(`❌ Neighborhoods without prices: ${withoutPrices.length}`);
-
-  // if (withoutPrices.length > 0) {
-  //   console.log('Neighborhoods missing price data:', withoutPrices.map(f => f.properties.neighborhood));
-  // }
-
-  // console.table(
-  //   enhancedNeighborhoodGeojson.features.map(f => ({
-  //     Neighborhood: f.properties.neighborhood,
-  //     'Price Range': f.properties.priceRange || 'NO RANGE',
-  //     'New Construction': f.properties.new_construction ? 'Yes' : 'No',
-  //     'Has Resales': f.properties.has_resale_homes ? 'Yes' : 'No'
-  //   }))
-  // );
-  // console.groupEnd();
 
   // add the polygons
   map.addSource('neighborhoods', {
@@ -629,6 +642,12 @@ export function setupMapInteractions(map, popup, getSelectedId, setSelectedId, s
 
   // Click event - select neighborhood
   map.on('click', 'neighborhood-fills', (e) => {
+    // Defensive guard: Ensure enhanced GeoJSON is ready before allowing clicks
+    if (!enhancedNeighborhoodGeojson || !enhancedNeighborhoodGeojson.features) {
+
+      return;
+    }
+
     if (e.features.length > 0) {
       const clickedFeature = e.features[0];
 

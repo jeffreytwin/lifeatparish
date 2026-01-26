@@ -87,8 +87,7 @@ export function populateHomeTypes(houses, applyFiltersCallback) {
  * @param {Function} applyFiltersCallback - Callback to apply filters
  */
 export function populateAmenities(neighborhoods, applyFiltersCallback) {
-  console.group('🔍 DEBUG: Populate Amenities');
-  console.log('Total neighborhoods received:', neighborhoods?.length);
+
 
   const amenitiesSet = new Set();
   let neighborhoodsWithAmenities = 0;
@@ -101,35 +100,20 @@ export function populateAmenities(neighborhoods, applyFiltersCallback) {
       neighborhoodsWithAmenities++;
       amenities.forEach(a => amenitiesSet.add(a));
 
-      // Log first 3 neighborhoods with amenities for debugging
-      if (neighborhoodsWithAmenities <= 3) {
-        console.log(`✓ Neighborhood ${index} (${neighborhood.villageTitle}):`, amenities);
-      }
+
     } else {
       neighborhoodsWithoutAmenities++;
 
-      // Log first 3 neighborhoods WITHOUT amenities for debugging
-      if (neighborhoodsWithoutAmenities <= 3) {
-        console.warn(`✗ Neighborhood ${index} (${neighborhood.villageTitle}): NO amenitiesTags`, {
-          hasField: 'amenitiesTags' in neighborhood,
-          isArray: Array.isArray(amenities),
-          value: amenities
-        });
-      }
+
     }
   });
 
-  console.log('Summary:', {
-    withAmenities: neighborhoodsWithAmenities,
-    withoutAmenities: neighborhoodsWithoutAmenities,
-    uniqueAmenities: amenitiesSet.size
-  });
+
 
   const list = document.getElementById('amenities-list');
   const sorted = Array.from(amenitiesSet).sort();
 
-  console.log('Final amenities list:', sorted);
-  console.groupEnd();
+
 
   sorted.forEach(amenity => {
     const label = document.createElement('label');
@@ -227,11 +211,11 @@ export function populateGarages(applyFiltersCallback) {
  */
 function calculatePriceRange(houses) {
   if (!houses || houses.length === 0) {
-    console.log('No houses data, using fallback defaults');
+
     return { min: 200, max: 6000 }; // Fallback defaults
   }
 
-  console.log(`Analyzing ${houses.length} houses for price range...`);
+
 
   let minPrice = Infinity;
   let maxPrice = 0;
@@ -241,10 +225,7 @@ function calculatePriceRange(houses) {
     // Use listingPricePure (already a number) if available, otherwise parse listingPrice string
     const priceRaw = house.listingPricePure || parseFloat((house.listingPrice || '').replace(/[$,]/g, ''));
 
-    if (index < 5) {
-      // Log first 5 houses for debugging
-      console.log(`House ${index}: listingPricePure=${house.listingPricePure}, listingPrice="${house.listingPrice}" -> using=${priceRaw}`);
-    }
+
 
     if (priceRaw > 0) {
       validPriceCount++;
@@ -253,21 +234,19 @@ function calculatePriceRange(houses) {
     }
   });
 
-  console.log(`Found ${validPriceCount} houses with valid prices`);
-  console.log(`Raw min: $${minPrice.toLocaleString()}, Raw max: $${maxPrice.toLocaleString()}`);
+
 
   // Convert to thousands and round
   minPrice = Math.floor(minPrice / 1000);
   maxPrice = Math.ceil(maxPrice / 1000);
 
-  console.log(`After converting to thousands: min=${minPrice}, max=${maxPrice}`);
+
 
   // Add some padding and round to nice numbers
   minPrice = Math.floor(minPrice / 50) * 50; // Round down to nearest 50K
   maxPrice = Math.ceil(maxPrice / 50) * 50;   // Round up to nearest 50K
 
-  console.log(`After rounding to 50K: min=${minPrice}, max=${maxPrice}`);
-  console.log(`Final price range: $${minPrice}K - $${maxPrice}K`);
+
 
   return { min: minPrice, max: maxPrice };
 }
@@ -302,12 +281,11 @@ export function setupPriceSlider(houses, applyFiltersCallback) {
   maxSlider.setAttribute('step', step);
   maxSlider.value = rangeMax;
 
-  console.log(`Setting slider range: ${rangeMin} - ${rangeMax}, step: ${step}`);
-  console.log(`Slider values after set: min=${minSlider.value}, max=${maxSlider.value}`);
+
 
   // Update filter state defaults and store as default range
   setDefaultPriceRange(rangeMin, rangeMax);
-  console.log(`Default price range set to: ${rangeMin} - ${rangeMax}`);
+
 
   // Update labels in HTML
   const labels = document.querySelectorAll('.flex.justify-between.text-sm.font-medium.text-gray-700.mb-3 span');
@@ -331,7 +309,7 @@ export function setupPriceSlider(houses, applyFiltersCallback) {
 
     const formattedMin = formatPrice(min);
     const formattedMax = formatPrice(max);
-    console.log(`updateSlider: min=${min} -> ${formattedMin}, max=${max} -> ${formattedMax}`);
+
 
     selectedRange.textContent = `${formattedMin} - ${formattedMax}`;
 
@@ -510,6 +488,11 @@ export function setupClearAll(applyFiltersCallback) {
  * @param {Function} updateFilterUICallback - Callback to update filter UI
  */
 export function applyFilters(map, geojson, getSelectedId, setSelectedId, closeDetails, updateFilterUICallback) {
+  // Defensive guards: ensure all dependencies are ready
+  if (!map || !geojson || !geojson.features) {
+
+    return;
+  }
 
   // Clear selected polygon and close details panel when filtering
   if (getSelectedId() !== null) {
@@ -535,12 +518,7 @@ export function applyFilters(map, geojson, getSelectedId, setSelectedId, closeDe
 
   // Step 2: If house filters are active, filter houses and get matching villages
   if (hasHouseFilters && allHouses.length > 0) {
-    console.log('🔍 House-based filters active:', {
-      homeTypes: filterState.homeTypes,
-      bedrooms: filterState.bedrooms,
-      garages: filterState.garages,
-      priceRange: hasPriceFilter ? `${filterState.priceMin}-${filterState.priceMax}` : 'none'
-    });
+
 
     const filteredHouses = allHouses.filter(house => {
       let matches = true;
@@ -597,8 +575,7 @@ export function applyFilters(map, geojson, getSelectedId, setSelectedId, closeDe
 
     // Extract unique villages from filtered houses
     matchingVillages = new Set(filteredHouses.map(h => (h.village || '').toLowerCase()));
-    console.log(`✅ House filters result: ${filteredHouses.length} houses in ${matchingVillages.size} neighborhoods`);
-    console.log('📍 Matching villages:', Array.from(matchingVillages));
+
   }
 
   // Step 3: Apply neighborhood-based filters
@@ -606,8 +583,7 @@ export function applyFilters(map, geojson, getSelectedId, setSelectedId, closeDe
   const matchedFeatures = [];
   const visibleFeatureIds = [];
 
-  console.log('Starting neighborhood filtering. Total features:', features.length);
-  console.log('matchingVillages:', matchingVillages === null ? 'null (no house filters)' : `Set with ${matchingVillages.size} items`);
+
 
   features.forEach((feature, index) => {
     const props = feature.properties;
@@ -643,10 +619,10 @@ export function applyFilters(map, geojson, getSelectedId, setSelectedId, closeDe
       // If house filters found zero matches, hide all neighborhoods
       if (matchingVillages.size === 0) {
         matches = false;
-        if (index < 3) console.log(`"${neighborhoodName}": Hidden (zero houses match house filters)`);
+
       } else {
         matches = matches && matchingVillages.has(neighborhoodName);
-        if (index < 3) console.log(`"${neighborhoodName}": Before house filter=${beforeHouseFilter}, In village list=${matchingVillages.has(neighborhoodName)}, Final=${matches}`);
+
       }
     }
 
@@ -657,7 +633,7 @@ export function applyFilters(map, geojson, getSelectedId, setSelectedId, closeDe
     }
   });
 
-  console.log(`Final result: ${matchedCount} neighborhoods visible, ${visibleFeatureIds.length} feature IDs`);
+
 
   updateMapVisibility(map, visibleFeatureIds);
   updateFilterUICallback(matchedCount, geojson);

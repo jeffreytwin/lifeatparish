@@ -62,20 +62,18 @@ Interactive neighborhood map for Parrish, FL that helps home buyers filter and e
 
 Comprehensive documentation is available in the `/docs` folder:
 
-### Setup Guide
+### For New Owners/Clients
+
+- **[HANDOVER.md](./HANDOVER.md)** - **START HERE** - Complete guide for taking ownership of the project
+
+### Setup & Development
 
 - [Setup](./docs/setup.md) - Prerequisites, local development, Mapbox, Wix, and Firebase configuration
-
-### Deployment
-
-- [Deployment](./docs/deployment.md) - Manual and automated deployment via GitHub Actions
-
-### Architecture
-
 - [Architecture](./docs/architecture.md) - System design, data flow, and components
 
-### Maintenance
+### Deployment & Maintenance
 
+- [Deployment](./docs/deployment.md) - Manual and automated deployment via GitHub Actions
 - [Maintenance](./docs/maintenance.md) - Updating GeoJSON boundaries and troubleshooting
 
 ### Reference

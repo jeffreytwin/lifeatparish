@@ -3,7 +3,7 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 import { fetchFloorPlans, fetchHousesForSale, fetchNeighborhoods } from './modules/api.js';
 import { closeDetailsPanel, initDetailsPanel, showNeighborhoodDetails } from './modules/details-panel.js';
 import { applyFilters as applyFiltersModule, setupFilters, updateFilterUI } from './modules/filters.js';
-import { createPopup, fetchNeighborhoodGeojson, fitMapToAllNeighborhoods, getEnhancedGeojson, loadNeighborhoodsGeojson, setupMapInteractions } from './modules/map.js';
+import { createPopup, fetchNeighborhoodGeojson, fitMapToAllNeighborhoods, getEnhancedGeojson, loadNeighborhoodsGeojson, refreshEnhancedGeojson, setupMapInteractions } from './modules/map.js';
 import { getHousesForSale, getNeighborhoodsData, getSelectedNeighborhoodId, setFloorPlans, setHousesForSale, setNeighborhoodsData, setSelectedNeighborhoodId, setVillagesWithFloorPlans } from './modules/state.js';
 
 const neighborhoodGeojson = await fetchNeighborhoodGeojson()
@@ -125,7 +125,7 @@ function selectNeighborhoodByName(neighborhoodName) {
   // Show details panel
   showNeighborhoodDetails(mapFeature.properties);
 
-  console.log(`Auto-selected neighborhood: ${feature.properties.neighborhood}`);
+
 }
 
 /**
@@ -133,39 +133,39 @@ function selectNeighborhoodByName(neighborhoodName) {
  * This allows the Wix parent page to communicate with the embedded iframe
  */
 function setupPostMessageListener() {
-  // Allowed origins for postMessage communication
-  const ALLOWED_ORIGINS = [
-    'https://www.lifeatparrish.com',
-    'https://lifeatparrish.com',
-    // Allow localhost for development (any port)
-    ...(window.location.hostname === 'localhost' ? ['http://localhost:5173', 'http://localhost:4173'] : [])
-  ];
+  // Queue for messages that arrive before map is ready
+  const messageQueue = [];
+  let isMapReady = false;
 
-  window.addEventListener('message', (event) => {
-    // Security: Validate message origin
-    if (!ALLOWED_ORIGINS.includes(event.origin)) {
-      console.warn(`Rejected postMessage from unauthorized origin: ${event.origin}`);
-      return;
+  // Process queued messages once map is ready
+  function processQueuedMessages() {
+    if (!isMapReady) return;
+
+    while (messageQueue.length > 0) {
+      const queuedEvent = messageQueue.shift();
+
+      handleMessage(queuedEvent);
     }
+  }
 
+  // Handle a single message
+  function handleMessage(event) {
     // Check if message contains neighborhood data
     if (event.data && event.data.neighborhood) {
       const neighborhoodName = event.data.neighborhood;
-      console.log(`Received neighborhood selection via postMessage: ${neighborhoodName}`);
 
-      // Select the neighborhood
       selectNeighborhoodByName(neighborhoodName);
     }
 
     // Also support action commands
     if (event.data && event.data.action === 'selectNeighborhood' && event.data.name) {
-      console.log(`Received selectNeighborhood action via postMessage: ${event.data.name}`);
+
       selectNeighborhoodByName(event.data.name);
     }
 
     // Support clearing selection
     if (event.data && event.data.action === 'clearSelection') {
-      console.log('Received clearSelection action via postMessage');
+
 
       // Clear selection
       if (getSelectedNeighborhoodId() !== null) {
@@ -188,9 +188,42 @@ function setupPostMessageListener() {
       // Close details panel
       closeDetailsPanel();
     }
+  }
+
+  // Allowed origins for postMessage communication
+  const ALLOWED_ORIGINS = [
+    'https://www.lifeatparrish.com',
+    'https://lifeatparrish.com',
+    // Allow localhost for development (any port)
+    ...(window.location.hostname === 'localhost' ? ['http://localhost:5173', 'http://localhost:4173'] : [])
+  ];
+
+  window.addEventListener('message', (event) => {
+    // Security: Validate message origin
+    if (!ALLOWED_ORIGINS.includes(event.origin)) {
+      console.warn(`Rejected postMessage from unauthorized origin: ${event.origin}`);
+      return;
+    }
+
+    // If map isn't ready yet, queue the message
+    if (!isMapReady) {
+
+      messageQueue.push(event);
+      return;
+    }
+
+    // Map is ready, handle immediately
+    handleMessage(event);
   });
 
-  console.log('postMessage listener initialized - ready to receive neighborhood selections from parent window');
+  // Mark map as ready and process queue when map layers are loaded
+  // This function is called after setupPostMessageListener() completes
+  window.__markPostMessageReady = () => {
+    isMapReady = true;
+    processQueuedMessages();
+  };
+
+
 }
 
 // init mapbox
@@ -248,7 +281,7 @@ function initializeMapIfReady() {
 
     // Fit map to all neighborhoods on mobile, keep custom view on desktop
     const isMobile = window.innerWidth < 768;
-    if (isMobile) {
+    if (isMobile && neighborhoodGeojson && neighborhoodGeojson.features && neighborhoodGeojson.features.length > 0) {
       fitMapToAllNeighborhoods(map, neighborhoodGeojson);
     }
     // Desktop uses custom initial view (center: [-82.51, 27.58], zoom: 11.5) to show beach proximity
@@ -260,7 +293,7 @@ function initializeMapIfReady() {
       const checkLayersReady = setInterval(() => {
         if (map.getSource('neighborhoods')) {
           clearInterval(checkLayersReady);
-          console.log('Map layers ready, auto-selecting neighborhood:', neighborhoodParam);
+
           selectNeighborhoodByName(neighborhoodParam);
         }
       }, 100); // Check every 100ms
@@ -275,25 +308,25 @@ function initializeMapIfReady() {
 
     // Setup postMessage listener for parent window communication
     setupPostMessageListener();
+
+    // Mark postMessage listener as ready to process queued messages
+    if (window.__markPostMessageReady) {
+      window.__markPostMessageReady();
+    }
   }
 }
 
 // Fetch and store neighborhoods data
-console.log('Fetching neighborhoods... (timestamp:', Date.now(), ')');
+
 fetchNeighborhoods().then(neighborhoods => {
-  console.log('Neighborhoods fetched (timestamp:', Date.now(), ')');
+
   setNeighborhoodsData(neighborhoods || []);
-  // console.log(`Loaded ${neighborhoods?.length || 0} neighborhoods from Wix`);
+
   neighborhoodsLoaded = true;
   initializeMapIfReady();
 
   // Try to initialize filters if enhanced geojson is ready and filters not yet initialized
-  console.log('Neighborhoods fetch complete. Checking conditions:', {
-    mapLoaded: map.loaded(),
-    enhancedGeojson: !!getEnhancedGeojson(),
-    neighborhoodsCount: neighborhoods?.length || 0,
-    filtersInitialized: filtersInitialized
-  });
+
 
   // Check enhancedGeojson instead of map.loaded() because geojson is the actual requirement
   if (getEnhancedGeojson() && !filtersInitialized) {
@@ -312,7 +345,7 @@ fetchFloorPlans().then(result => {
   // Store both the full array and the Set of village IDs
   setFloorPlans(result.plans);
   setVillagesWithFloorPlans(result.villageIds);
-  // console.log(`✓ Loaded ${result.villageIds.size} neighborhoods with new construction`);
+
   floorPlansLoaded = true;
   initializeMapIfReady();
 }).catch(error => {
@@ -326,7 +359,12 @@ fetchFloorPlans().then(result => {
 // Fetch houses and store in state
 fetchHousesForSale().then(houses => {
   setHousesForSale(houses || []);
-  // console.log(`Loaded ${houses?.length || 0} houses for sale`);
+
+
+  // Refresh enhanced GeoJSON to recalculate price ranges now that houses are loaded
+  if (map.loaded() && neighborhoodGeojson) {
+    refreshEnhancedGeojson(map, neighborhoodGeojson);
+  }
 
   // Hide loading overlay
   const loadingOverlay = document.getElementById('sidebar-loading');
@@ -335,13 +373,7 @@ fetchHousesForSale().then(houses => {
   }
 
   // Setup filters once houses are loaded
-  console.log('Houses fetch complete. Checking conditions:', {
-    mapLoaded: map.loaded(),
-    enhancedGeojson: !!getEnhancedGeojson(),
-    neighborhoodsCount: getNeighborhoodsData().length,
-    housesCount: houses?.length || 0,
-    filtersInitialized: filtersInitialized
-  });
+
 
   // Check enhancedGeojson instead of map.loaded() because geojson is the actual requirement
   if (getEnhancedGeojson() && !filtersInitialized) {
@@ -440,7 +472,7 @@ let initializationInProgress = false;
 function initializeFilters() {
   // Prevent concurrent initialization attempts
   if (initializationInProgress) {
-    console.log('Initialization already in progress, skipping duplicate call');
+
     return;
   }
 
@@ -450,7 +482,7 @@ function initializeFilters() {
 
   // Check if already initialized AND has data (prevent re-init if already complete)
   if (filtersInitialized && houses.length > 0) {
-    console.log('Filters already initialized with data, skipping');
+
     return;
   }
 
@@ -477,7 +509,7 @@ function initializeFilters() {
     return;
   }
 
-  console.log('Initializing filters with', neighborhoods.length, 'neighborhoods and', houses.length, 'houses');
+
 
   try {
     // Wrapper for applyFilters that provides all necessary dependencies
@@ -490,7 +522,7 @@ function initializeFilters() {
 
     // Mark as successfully initialized
     filtersInitialized = true;
-    console.log('Filters initialization complete');
+
   } catch (error) {
     console.error('Error during filter initialization:', error);
   } finally {
