@@ -18,7 +18,7 @@ Interactive neighborhood map for Parrish, FL that helps home buyers filter and e
 - npm 9 or higher
 - Mapbox account (free tier works)
 - Wix account with OAuth client ID
-- Firebase account (for hosting)
+- Firebase account (for hosting & analytics)
 
 ### Installation
 
@@ -101,6 +101,7 @@ Comprehensive documentation is available in the `/docs` folder:
 ### Hosting
 
 - **Firebase Hosting** - Static file hosting with global CDN
+- **Firebase Analytics** - User engagement tracking
 - **GitHub Actions** - Automated deployment pipeline
 
 ## Available Commands

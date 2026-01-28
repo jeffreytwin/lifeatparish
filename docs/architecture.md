@@ -6,6 +6,7 @@
 **Map:** Mapbox GL JS
 **Data:** Wix Data API, GeoJSON (hosted on Wix Media Manager)
 **Hosting:** Firebase Hosting
+**Analytics:** Firebase Analytics
 **CI/CD:** GitHub Actions
 
 ## Project Structure
@@ -25,9 +26,11 @@ parrish-map/
 │               ├── filters.js     # Filter logic
 │               ├── details-panel.js
 │               ├── state.js       # App state
+│               ├── analytics.js   # Firebase Analytics
 │               └── utils.js
 ├── config.example.js              # Config template
 ├── index.html                     # Main HTML
+├── firebase.json                  # Firebase config
 └── package.json
 ```
 
@@ -36,7 +39,8 @@ parrish-map/
 ### Initialization
 
 1. Load `config.js` (Mapbox token)
-2. Initialize Mapbox map
+2. Initialize Firebase Analytics
+3. Initialize Mapbox map
 3. **Fetch in parallel:**
    - Wix: Neighborhoods, HousesforSale, FloorPlans
    - Wix Media Manager: GeoJSON boundaries
@@ -129,6 +133,10 @@ Filter system:
 - `showNeighborhoodDetails()` - Display panel with houses
 - `closeDetailsPanel()` - Hide panel
 - Responsive: side panel (desktop) → bottom sheet (mobile)
+
+### analytics.js
+
+- `initAnalytics()` - Initializes Firebase Analytics with configuration
 
 ## Data Sources
 
