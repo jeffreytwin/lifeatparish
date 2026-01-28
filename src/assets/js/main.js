@@ -1,10 +1,14 @@
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
+import { initAnalytics } from './modules/analytics.js';
 import { fetchFloorPlans, fetchHousesForSale, fetchNeighborhoods } from './modules/api.js';
 import { closeDetailsPanel, initDetailsPanel, showNeighborhoodDetails } from './modules/details-panel.js';
 import { applyFilters as applyFiltersModule, setupFilters, updateFilterUI } from './modules/filters.js';
 import { createPopup, fetchNeighborhoodGeojson, fitMapToAllNeighborhoods, getEnhancedGeojson, loadNeighborhoodsGeojson, refreshEnhancedGeojson, setupMapInteractions } from './modules/map.js';
 import { getHousesForSale, getNeighborhoodsData, getSelectedNeighborhoodId, setFloorPlans, setHousesForSale, setNeighborhoodsData, setSelectedNeighborhoodId, setVillagesWithFloorPlans } from './modules/state.js';
+
+// Initialize Analytics
+initAnalytics();
 
 const neighborhoodGeojson = await fetchNeighborhoodGeojson()
 
