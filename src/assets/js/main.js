@@ -4,7 +4,7 @@ import { initAnalytics } from './modules/analytics.js';
 import { fetchFloorPlans, fetchHousesForSale, fetchNeighborhoods } from './modules/api.js';
 import { closeDetailsPanel, initDetailsPanel, showNeighborhoodDetails } from './modules/details-panel.js';
 import { applyFilters as applyFiltersModule, setupFilters, updateFilterUI } from './modules/filters.js';
-import { createPopup, fetchNeighborhoodGeojson, fitMapToAllNeighborhoods, getEnhancedGeojson, loadNeighborhoodsGeojson, refreshEnhancedGeojson, setupMapInteractions } from './modules/map.js';
+import { createPopup, fetchNeighborhoodGeojson, fitMapToAllNeighborhoods, getEnhancedGeojson, loadNeighborhoodsGeojson, setupMapInteractions } from './modules/map.js';
 import { getHousesForSale, getNeighborhoodsData, getSelectedNeighborhoodId, setFloorPlans, setHousesForSale, setNeighborhoodsData, setSelectedNeighborhoodId, setVillagesWithFloorPlans } from './modules/state.js';
 
 // Initialize Analytics
@@ -249,10 +249,11 @@ const map = new mapboxgl.Map({
 let floorPlansLoaded = false;
 let neighborhoodsLoaded = false;
 let mapLoaded = false;
+let housesLoaded = false;
 
 // Function to initialize map layers once all data is ready
 function initializeMapIfReady() {
-  if (floorPlansLoaded && neighborhoodsLoaded && mapLoaded) {
+  if (floorPlansLoaded && neighborhoodsLoaded && mapLoaded && housesLoaded) {
     // Add your GeoJSON polygons and layers
     loadNeighborhoodsGeojson(map, neighborhoodGeojson);
 
@@ -324,9 +325,7 @@ function initializeMapIfReady() {
 // Fetch and store neighborhoods data
 
 fetchNeighborhoods().then(neighborhoods => {
-
   setNeighborhoodsData(neighborhoods || []);
-
   neighborhoodsLoaded = true;
   initializeMapIfReady();
 
@@ -350,7 +349,6 @@ fetchFloorPlans().then(result => {
   // Store both the full array and the Set of village IDs
   setFloorPlans(result.plans);
   setVillagesWithFloorPlans(result.villageIds);
-
   floorPlansLoaded = true;
   initializeMapIfReady();
 }).catch(error => {
@@ -364,12 +362,8 @@ fetchFloorPlans().then(result => {
 // Fetch houses and store in state
 fetchHousesForSale().then(houses => {
   setHousesForSale(houses || []);
-
-
-  // Refresh enhanced GeoJSON to recalculate price ranges now that houses are loaded
-  if (map.loaded() && neighborhoodGeojson) {
-    refreshEnhancedGeojson(map, neighborhoodGeojson);
-  }
+  housesLoaded = true;
+  initializeMapIfReady();
 
   // Hide loading overlay
   const loadingOverlay = document.getElementById('sidebar-loading');
