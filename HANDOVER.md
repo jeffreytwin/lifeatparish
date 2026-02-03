@@ -469,8 +469,9 @@ export async function fetchNeighborhoodGeojson() {
 **3. FloorPlans Collection:**
 
 - `villages` - Neighborhood name
-- `planName`, `bedrooms`, `bathrooms`, `squareFeet`
-- `floorPlanUrl`
+- `floorPlanName`, `bedrooms`, `bathrooms`, `squareFeet`
+- `garages`, `homeType`, `floorPlanPrice`
+- `floorPlanUrl`, `floorPlanImage`
 
 **To edit Wix data:**
 

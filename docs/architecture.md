@@ -157,6 +157,8 @@ Filter system:
 **FloorPlans:**
 
 - `villages` - Array of neighborhood IDs
+- `floorPlanName`, `bedrooms`, `bathrooms`, `squareFeet`
+- `garages`, `floorPlanPrice`, `homeType`
 - Links neighborhoods to new construction
 
 ### GeoJSON
