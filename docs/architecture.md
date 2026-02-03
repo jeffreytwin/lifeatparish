@@ -198,6 +198,47 @@ Three layers render neighborhoods:
    - Blue (#2563eb), width 4px
    - Only visible when selected
 
+## UI Components
+
+### Sidebar Filter Controls
+
+| Control | Type | Description |
+|---------|------|-------------|
+| Search | Text input | Filters neighborhoods by name (debounced 300ms) |
+| Clear Search | Button (×) | Clears search input, hidden when empty |
+| Price Range | Dual range slider | Min/max from $200K to $6M+ |
+| Availability | Radio buttons | "Show All", "New Construction Available", "Resale Homes Available" |
+| Home Types | Toggle buttons | Dynamically populated from house data (Single Family, Villa, Townhome, Condo) |
+| Amenities | Dropdown + checkboxes | Searchable dropdown with multi-select, shows selected as chips |
+| Bedrooms | Toggle buttons | "1-2", "3-4", "5+" |
+| Garages | Toggle buttons | "1-2", "3-4" |
+| Clear All Filters | Text button | Resets all filters to defaults |
+| View Results | Button (mobile) | Closes sidebar and shows map |
+
+### Map Controls
+
+| Control | Position | Description |
+|---------|----------|-------------|
+| Zoom +/- | Bottom right | Mapbox NavigationControl (compass hidden) |
+| Fit Bounds | Bottom right | Custom button - fits view to all neighborhoods |
+| Legend | Top left | Shows "New Construction Available" indicator (green) |
+
+### Details Panel
+
+| Element | Description |
+|---------|-------------|
+| Close button (×) | Top right, closes panel |
+| Header | Neighborhood image, name, price range, links |
+| House cards | Scrollable list of available homes |
+
+### Mobile-Only Elements
+
+| Element | Description |
+|---------|-------------|
+| Top bar | Fixed bar with search input + "Filters" button |
+| Filters button | Opens sidebar as bottom sheet |
+| Mobile sidebar close (×) | Closes bottom sheet |
+
 ## Responsive Design
 
 **Breakpoints:**

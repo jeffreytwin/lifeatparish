@@ -224,6 +224,51 @@ iframe.contentWindow.postMessage({
 }, 'https://map-domain.com');
 ```
 
+## UI Element IDs
+
+### Sidebar Filters
+
+| Element ID | Type | Purpose |
+|------------|------|---------|
+| `search-input` | input | Neighborhood search |
+| `clear-search` | button | Clear search (hidden when empty) |
+| `price-min` | range input | Min price slider |
+| `price-max` | range input | Max price slider |
+| `price-range-fill` | div | Visual fill between sliders |
+| `selected-range` | span | Displays current price range text |
+| `forSale` (name) | radio group | Availability filter (values: `all`, `new`, `existing`) |
+| `home-types-container` | div | Container for home type buttons |
+| `amenities-dropdown-btn` | button | Opens amenities dropdown |
+| `amenities-dropdown` | div | Dropdown panel |
+| `amenities-search` | input | Search within amenities |
+| `amenities-list` | div | Amenity checkboxes container |
+| `selected-amenities` | div | Selected amenity chips |
+| `bedrooms-container` | div | Bedroom filter buttons |
+| `garages-container` | div | Garage filter buttons |
+| `clear-all-filters` | button | Reset all filters |
+| `filter-count` | span | Active filter count |
+| `no-results` | div | "No matches" warning |
+| `matched-count` | span | Neighborhoods matching filters |
+| `total-count` | span | Total neighborhoods |
+
+### Mobile Elements
+
+| Element ID | Type | Purpose |
+|------------|------|---------|
+| `mobile-search-input` | input | Mobile search (synced with desktop) |
+| `mobile-filters-btn` | button | Opens sidebar bottom sheet |
+| `mobile-sidebar-close` | button | Closes sidebar bottom sheet |
+| `mobile-sidebar-overlay` | div | Backdrop overlay |
+| `view-results-btn` | button | Closes sidebar, shows map |
+
+### Map & Details
+
+| Element ID | Type | Purpose |
+|------------|------|---------|
+| `map` | div | Mapbox container |
+| `neighborhood-details` | div | Details panel container |
+| `sidebar-loading` | div | Loading overlay |
+
 ## State Management
 
 Centralized state in `src/assets/js/modules/state.js`:
