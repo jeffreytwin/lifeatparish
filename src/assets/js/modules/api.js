@@ -132,14 +132,14 @@ export async function fetchFloorPlans() {
     'villages',// Used for creating Set of village IDs
     'village',// Used for matching neighborhoods
     'floorPlanPrice', // Used for price range calculations
-    'floorPlanName' // Used for debugging/logging
+    'floorPlanName', // Used for debugging/logging
   ];
 
   // Get first page - fetch only required fields
   // Filter for only quick move-in available properties
   let result = await wixClient.items
     .query('FloorPlans')
-    .eq('quickMoveInAvailable', true)
+    .isNotEmpty('score1')
     .fields(...requiredFields)
     .limit(300)
     .find();
