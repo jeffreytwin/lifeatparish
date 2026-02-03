@@ -133,6 +133,11 @@ export async function fetchFloorPlans() {
     'village',// Used for matching neighborhoods
     'floorPlanPrice', // Used for price range calculations
     'floorPlanName', // Used for debugging/logging
+    'bedrooms',
+    'garages',
+    'squareFeet',
+    'bathrooms',
+    'homeType'
   ];
 
   // Get first page - fetch only required fields

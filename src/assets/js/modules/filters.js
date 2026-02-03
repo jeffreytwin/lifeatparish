@@ -3,7 +3,7 @@
  */
 
 import mapboxgl from 'mapbox-gl';
-import { defaultPriceRange, filterState, getHousesForSale, getFloorPlans, setDefaultPriceRange } from './state.js';
+import { defaultPriceRange, filterState, getFloorPlans, getHousesForSale, setDefaultPriceRange } from './state.js';
 import { debounce, formatPrice, parsePrice } from './utils.js';
 
 // ========== HOME TYPE NORMALIZATION ==========
@@ -576,26 +576,66 @@ export function applyFilters(map, geojson, getSelectedId, setSelectedId, closeDe
     // Extract unique villages from filtered houses
     matchingVillages = new Set(filteredHouses.map(h => (h.village || '').toLowerCase()));
 
-    // Also filter floor plans by price if price filter is active
-    if (hasPriceFilter) {
-      const allFloorPlans = getFloorPlans();
+    // Filter floor plans by ALL active filters
+    const allFloorPlans = getFloorPlans();
 
-      const filteredFloorPlans = allFloorPlans.filter(fp => {
+    const filteredFloorPlans = allFloorPlans.filter(fp => {
+      let matches = true;
+
+      // Filter by Home Type
+      if (filterState.homeTypes.length > 0 && fp.homeType) {
+        const normalizedType = normalizeHomeType(fp.homeType);
+        matches = matches && filterState.homeTypes.includes(normalizedType);
+      }
+
+      // Filter by Bedrooms
+      if (filterState.bedrooms.length > 0 && fp.bedrooms) {
+        // Parse "5" or "4" string to number
+        const beds = parseFloat(fp.bedrooms) || 0;
+        const matchesBedrooms = filterState.bedrooms.some(range => {
+          if (range === '1-2') return beds >= 1 && beds <= 2;
+          if (range === '3-4') return beds >= 3 && beds <= 4;
+          if (range === '5+') return beds >= 5;
+          return false;
+        });
+        matches = matches && matchesBedrooms;
+      }
+
+      // Filter by Garages
+      if (filterState.garages.length > 0 && fp.garages) {
+        // Parse "2 car" -> 2
+        const garageStr = fp.garages || '';
+        const garageCount = parseInt(garageStr) || 0;
+        const matchesGarages = filterState.garages.some(range => {
+          if (range === '1-2') return garageCount >= 1 && garageCount <= 2;
+          if (range === '3-4') return garageCount >= 3 && garageCount <= 4;
+          return false;
+        });
+        matches = matches && matchesGarages;
+      }
+
+      // Filter by Price (if active)
+      if (hasPriceFilter) {
+        if (!fp.floorPlanPrice) return false;
+
         const priceInDollars = parsePrice(fp.floorPlanPrice);
         if (!priceInDollars || priceInDollars <= 0) return false;
 
         const priceInThousands = priceInDollars / 1000;
-        return priceInThousands >= filterState.priceMin && priceInThousands <= filterState.priceMax;
-      });
+        const inRange = priceInThousands >= filterState.priceMin && priceInThousands <= filterState.priceMax;
+        matches = matches && inRange;
+      }
 
-      // Add villages from matching floor plans to the set
-      filteredFloorPlans.forEach(fp => {
-        const villageName = (fp.village || '').toLowerCase();
-        if (villageName) {
-          matchingVillages.add(villageName);
-        }
-      });
-    }
+      return matches;
+    });
+
+    // Add villages from matching floor plans to the set
+    filteredFloorPlans.forEach(fp => {
+      const villageName = (fp.village || '').toLowerCase();
+      if (villageName) {
+        matchingVillages.add(villageName);
+      }
+    });
   }
 
   // Step 3: Apply neighborhood-based filters
