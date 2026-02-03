@@ -3,8 +3,8 @@
  */
 
 import mapboxgl from 'mapbox-gl';
-import { defaultPriceRange, filterState, getHousesForSale, setDefaultPriceRange } from './state.js';
-import { debounce, formatPrice } from './utils.js';
+import { defaultPriceRange, filterState, getHousesForSale, getFloorPlans, setDefaultPriceRange } from './state.js';
+import { debounce, formatPrice, parsePrice } from './utils.js';
 
 // ========== HOME TYPE NORMALIZATION ==========
 
@@ -576,6 +576,26 @@ export function applyFilters(map, geojson, getSelectedId, setSelectedId, closeDe
     // Extract unique villages from filtered houses
     matchingVillages = new Set(filteredHouses.map(h => (h.village || '').toLowerCase()));
 
+    // Also filter floor plans by price if price filter is active
+    if (hasPriceFilter) {
+      const allFloorPlans = getFloorPlans();
+
+      const filteredFloorPlans = allFloorPlans.filter(fp => {
+        const priceInDollars = parsePrice(fp.floorPlanPrice);
+        if (!priceInDollars || priceInDollars <= 0) return false;
+
+        const priceInThousands = priceInDollars / 1000;
+        return priceInThousands >= filterState.priceMin && priceInThousands <= filterState.priceMax;
+      });
+
+      // Add villages from matching floor plans to the set
+      filteredFloorPlans.forEach(fp => {
+        const villageName = (fp.village || '').toLowerCase();
+        if (villageName) {
+          matchingVillages.add(villageName);
+        }
+      });
+    }
   }
 
   // Step 3: Apply neighborhood-based filters
