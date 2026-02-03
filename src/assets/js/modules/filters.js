@@ -4,7 +4,7 @@
 
 import mapboxgl from 'mapbox-gl';
 import { defaultPriceRange, filterState, getFloorPlans, getHousesForSale, setDefaultPriceRange } from './state.js';
-import { debounce, formatPrice, parsePrice } from './utils.js';
+import { debounce, formatPrice } from './utils.js';
 
 // ========== HOME TYPE NORMALIZATION ==========
 
@@ -589,9 +589,8 @@ export function applyFilters(map, geojson, getSelectedId, setSelectedId, closeDe
       }
 
       // Filter by Bedrooms
-      if (filterState.bedrooms.length > 0 && fp.bedrooms) {
-        // Parse "5" or "4" string to number
-        const beds = parseFloat(fp.bedrooms) || 0;
+      if (filterState.bedrooms.length > 0) {
+        const beds = fp.bedroomsPure || 0;
         const matchesBedrooms = filterState.bedrooms.some(range => {
           if (range === '1-2') return beds >= 1 && beds <= 2;
           if (range === '3-4') return beds >= 3 && beds <= 4;
@@ -602,10 +601,8 @@ export function applyFilters(map, geojson, getSelectedId, setSelectedId, closeDe
       }
 
       // Filter by Garages
-      if (filterState.garages.length > 0 && fp.garages) {
-        // Parse "2 car" -> 2
-        const garageStr = fp.garages || '';
-        const garageCount = parseInt(garageStr) || 0;
+      if (filterState.garages.length > 0) {
+        const garageCount = fp.garagesPure || 0;
         const matchesGarages = filterState.garages.some(range => {
           if (range === '1-2') return garageCount >= 1 && garageCount <= 2;
           if (range === '3-4') return garageCount >= 3 && garageCount <= 4;
@@ -616,12 +613,11 @@ export function applyFilters(map, geojson, getSelectedId, setSelectedId, closeDe
 
       // Filter by Price (if active)
       if (hasPriceFilter) {
-        if (!fp.floorPlanPrice) return false;
+        const price = fp.listingPricePure; // Use pre-calculated price
 
-        const priceInDollars = parsePrice(fp.floorPlanPrice);
-        if (!priceInDollars || priceInDollars <= 0) return false;
+        if (!price || price <= 0) return false;
 
-        const priceInThousands = priceInDollars / 1000;
+        const priceInThousands = price / 1000;
         const inRange = priceInThousands >= filterState.priceMin && priceInThousands <= filterState.priceMax;
         matches = matches && inRange;
       }

@@ -4,6 +4,7 @@
 
 import { items } from '@wix/data';
 import { createClient, OAuthStrategy } from '@wix/sdk';
+import { parsePrice } from './utils.js';
 
 // Initialize Wix client
 const wixClient = createClient({
@@ -166,14 +167,40 @@ export async function fetchFloorPlans() {
   // Log sample floor plan to verify structure
 
 
+  // Pre-calculate numeric fields to optimize filter performance
+  allFloorPlans = allFloorPlans.map(fp => {
+    // Parse price
+    const pricePure = parsePrice(fp.floorPlanPrice);
+
+    // Parse bedrooms ("5" -> 5)
+    const bedroomsPure = parseFloat(fp.bedrooms) || 0;
+
+    // Parse garages ("2 car" -> 2)
+    const garagesPure = parseInt(fp.garages) || 0;
+
+    // Parse bathrooms ("3.5" -> 3.5)
+    const bathsPure = parseFloat(fp.bathrooms) || 0;
+
+    // Parse square feet ("2,705" -> 2705)
+    const sqftRaw = (fp.squareFeet || '').replace(/,/g, '');
+    const squareFeetPure = parseInt(sqftRaw) || 0;
+
+    return {
+      ...fp,
+      listingPricePure: pricePure, // Use standard naming consistent with houses
+      bedroomsPure,
+      garagesPure,
+      bathsPure,
+      squareFeetPure
+    };
+  });
+
   // Create a Set of unique village IDs that have floor plans
   const villagesWithFloorPlans = new Set(
     allFloorPlans
       .map(fp => fp.villages)
       .filter(id => id) // Filter out null/undefined
   );
-
-
 
   return {
     plans: allFloorPlans,
