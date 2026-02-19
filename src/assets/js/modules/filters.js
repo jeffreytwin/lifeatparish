@@ -534,7 +534,7 @@ export function applyFilters(map, geojson, getSelectedId, setSelectedId, closeDe
   closeDetails();
 
   const features = geojson.features;
-  const allHouses = getHousesForSale();
+  const allHouses = getHousesForSale() || [];
 
   // Step 1: Check if we have house-based filters active
   const hasPriceFilter = filterState.priceMin !== defaultPriceRange.min || filterState.priceMax !== defaultPriceRange.max;
@@ -546,7 +546,7 @@ export function applyFilters(map, geojson, getSelectedId, setSelectedId, closeDe
   let matchingVillages = null;
 
   // Step 2: If house filters are active, filter houses and get matching villages
-  if (hasHouseFilters && allHouses.length > 0) {
+  if (hasHouseFilters) {
 
 
     const filteredHouses = allHouses.filter(house => {
