@@ -361,7 +361,7 @@ export function setupSearch(applyFiltersCallback) {
   const clearBtn = document.getElementById('clear-search');
 
   const debouncedSearch = debounce((value) => {
-    filterState.search = value.toLowerCase();
+    filterState.search = normalizeNeighborhoodName(value);
     applyFiltersCallback();
   }, 300);
 
@@ -676,7 +676,7 @@ export function applyFilters(map, geojson, getSelectedId, setSelectedId, closeDe
 
     // Search filter (neighborhood name only)
     if (filterState.search) {
-      const name = (props.neighborhood || '').toLowerCase();
+      const name = normalizeNeighborhoodName(props.neighborhood || '');
       matches = matches && name.includes(filterState.search);
     }
 
