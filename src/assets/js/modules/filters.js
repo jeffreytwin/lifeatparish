@@ -258,6 +258,11 @@ function calculatePriceRange(houses) {
     }
   });
 
+  // Fallback when data exists but all price fields are missing/invalid
+  if (validPriceCount === 0) {
+    return { min: 200, max: 6000 };
+  }
+
 
 
   // Convert to thousands and round
