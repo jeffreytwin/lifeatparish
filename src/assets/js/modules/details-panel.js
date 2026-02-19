@@ -617,11 +617,12 @@ function setupDetailsPanelClose() {
  */
 function filterHousesByNeighborhood(neighborhoodName) {
   const allHouses = getHousesForSale();
+  const normalizedNeighborhoodName = normalizeNeighborhoodName(neighborhoodName);
 
   return allHouses.filter(house => {
     // Match using the village field
     const houseVillage = house.village || '';
-    if (houseVillage.toLowerCase() !== neighborhoodName.toLowerCase()) return false;
+    if (normalizeNeighborhoodName(houseVillage) !== normalizedNeighborhoodName) return false;
 
     // Apply home type filter
     if (filterState.homeTypes.length > 0) {
@@ -684,4 +685,3 @@ function filterHousesByNeighborhood(neighborhoodName) {
     return true;
   });
 }
-
