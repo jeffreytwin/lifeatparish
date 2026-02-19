@@ -36,6 +36,30 @@ export function normalizeHomeType(homeType) {
   return normalized;
 }
 
+/**
+ * Map GeoJSON neighborhood names to Wix neighborhood names
+ * Handles discrepancies in naming between data sources
+ */
+const NEIGHBORHOOD_NAME_MAPPING = {
+  'Oakfield Lakes': 'Oakfield',
+  'Del Webb BayView': 'Del Webb at Bayview',
+  'Isles at BayView': 'Isles at Bayview',
+  'The Islands on the Manatee River': 'The Islands on The Manatee River'
+};
+
+/**
+ * Normalize neighborhood names for consistent matching across sources
+ * @param {string} name - Neighborhood name
+ * @returns {string} Normalized name
+ */
+function normalizeNeighborhoodName(name) {
+  const mappedName = NEIGHBORHOOD_NAME_MAPPING[name] || name;
+
+  return mappedName.toLowerCase()
+    .replace(/\s+/g, '')
+    .replace(/[^a-z0-9]/g, '');
+}
+
 // ========== POPULATION FUNCTIONS ==========
 
 /**
@@ -574,7 +598,11 @@ export function applyFilters(map, geojson, getSelectedId, setSelectedId, closeDe
     });
 
     // Extract unique villages from filtered houses
-    matchingVillages = new Set(filteredHouses.map(h => (h.village || '').toLowerCase()));
+    matchingVillages = new Set(
+      filteredHouses
+        .map(h => normalizeNeighborhoodName(h.village || ''))
+        .filter(Boolean)
+    );
 
     // Filter floor plans by ALL active filters
     const allFloorPlans = getFloorPlans();
@@ -627,7 +655,7 @@ export function applyFilters(map, geojson, getSelectedId, setSelectedId, closeDe
 
     // Add villages from matching floor plans to the set
     filteredFloorPlans.forEach(fp => {
-      const villageName = (fp.village || '').toLowerCase();
+      const villageName = normalizeNeighborhoodName(fp.village || '');
       if (villageName) {
         matchingVillages.add(villageName);
       }
@@ -644,7 +672,7 @@ export function applyFilters(map, geojson, getSelectedId, setSelectedId, closeDe
   features.forEach((feature, index) => {
     const props = feature.properties;
     let matches = true;
-    const neighborhoodName = (props.neighborhood || '').toLowerCase();
+    const neighborhoodName = normalizeNeighborhoodName(props.neighborhood || '');
 
     // Search filter (neighborhood name only)
     if (filterState.search) {
@@ -670,8 +698,6 @@ export function applyFilters(map, geojson, getSelectedId, setSelectedId, closeDe
 
     // Step 4: Intersect with house-based filters (if active)
     if (matchingVillages !== null) {
-      const beforeHouseFilter = matches;
-
       // If house filters found zero matches, hide all neighborhoods
       if (matchingVillages.size === 0) {
         matches = false;
