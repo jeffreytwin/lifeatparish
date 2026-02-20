@@ -10,13 +10,6 @@ import { getHousesForSale, getNeighborhoodsData, getSelectedNeighborhoodId, setF
 // Initialize Analytics
 initAnalytics();
 
-const mapboxToken = window.config?.mapboxAccessToken || '';
-console.info('[LIVE_CHECK] Parrish map booted', {
-  appVersion: window.config?.appVersion || 'unknown',
-  hasMapboxToken: mapboxToken.startsWith('pk.'),
-  hasWixClientId: Boolean(window.config?.wixClientId)
-});
-
 const neighborhoodGeojson = await fetchNeighborhoodGeojson()
 
 /**
