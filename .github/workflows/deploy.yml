@@ -30,37 +30,6 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Create config.js
-        env:
-          MAPBOX_ACCESS_TOKEN_VAR: ${{ vars.MAPBOX_ACCESS_TOKEN }}
-          MAPBOX_ACCESS_TOKEN_SECRET: ${{ secrets.MAPBOX_ACCESS_TOKEN }}
-          WIX_CLIENT_ID: ${{ vars.WIX_CLIENT_ID }}
-        run: |
-          MAPBOX_ACCESS_TOKEN="${MAPBOX_ACCESS_TOKEN_VAR:-$MAPBOX_ACCESS_TOKEN_SECRET}"
-          if [ -z "$MAPBOX_ACCESS_TOKEN" ]; then
-            echo "MAPBOX_ACCESS_TOKEN is missing. Set it as a repository variable or secret."
-            exit 1
-          fi
-
-          WIX_CLIENT_ID_VALUE="${WIX_CLIENT_ID:-7cbe278c-f794-4ac6-8261-404022bb5625}"
-
-          cat > public/config.js << EOF
-          // config.js - Configuration settings for the application
-
-          // Application configuration
-          window.config = {
-              // Mapbox access token
-              mapboxAccessToken: '${MAPBOX_ACCESS_TOKEN}',
-
-              // Wix OAuth Client ID
-              wixClientId: '${WIX_CLIENT_ID_VALUE}',
-
-              // Other configuration options
-              appName: 'Parrish Map',
-              appVersion: '1.0.0',
-          };
-          EOF
-
       - name: Build project
         run: npm run build
 
