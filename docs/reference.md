@@ -199,8 +199,12 @@ firebase deploy --only hosting
 
 Set at: Repository → Settings → Secrets and variables → Actions
 
-- `FIREBASE_TOKEN` - Get via `firebase login:ci`
-- `MAPBOX_ACCESS_TOKEN` - Production Mapbox token
+- `FIREBASE_SERVICE_ACCOUNT` - Firebase service account JSON used by deploy workflow
+
+### Config Source (GitHub Actions)
+
+- CI builds use committed `public/config.js` directly.
+- `MAPBOX_ACCESS_TOKEN` is no longer injected by workflow secrets.
 
 ## postMessage API
 

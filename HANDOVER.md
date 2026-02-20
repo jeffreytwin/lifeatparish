@@ -215,7 +215,6 @@ Every time you push code to the `main` branch:
 1. **GitHub Actions triggers** (within seconds)
 2. **Workflow runs** (2-3 minutes):
    - Installs dependencies
-   - Creates `config.js` with secrets
    - Builds production bundle
    - Deploys to Firebase Hosting
 3. **Site updates** automatically
@@ -261,8 +260,6 @@ GitHub Secrets store sensitive credentials securely. Your repository has:
 | Secret Name | Purpose | How to Get |
 |-------------|---------|------------|
 | `FIREBASE_SERVICE_ACCOUNT` | Firebase deployment authentication | Firebase Console → Settings → Service accounts → Generate key |
-| `MAPBOX_ACCESS_TOKEN` | Map rendering | Mapbox Account → Access tokens |
-| `GITHUB_TOKEN` | Automatic (provided by GitHub) | N/A |
 
 ### Viewing GitHub Secrets
 
@@ -286,13 +283,12 @@ GitHub Secrets store sensitive credentials securely. Your repository has:
 
 1. Go to [Mapbox Account](https://account.mapbox.com/access-tokens/)
 2. Copy your token (starts with `pk.`)
-3. Go to GitHub → Settings → Secrets → Actions
-4. Click **MAPBOX_ACCESS_TOKEN** → **Update secret**
-5. Paste token → **Update secret**
+3. Update `public/config.js` with the new token
+4. Commit and push to `main` to deploy
 
 ### Local Configuration (`public/config.js`)
 
-This file is **NOT** committed to Git (it's in `.gitignore`).
+This file is committed to Git and used directly by CI builds.
 
 **For local development:**
 
@@ -307,7 +303,7 @@ window.config = {
 
 **For production deployment:**
 
-GitHub Actions creates this file automatically using secrets.
+GitHub Actions uses this committed file directly when running `npm run build`.
 
 ---
 
@@ -690,9 +686,10 @@ console.log(window.config.wixClientId)
 
 **GitHub Actions fails:**
 
-1. Check secrets are set correctly
+1. Check `FIREBASE_SERVICE_ACCOUNT` secret is set correctly
 2. Verify Firebase service account is valid
-3. Review workflow logs in Actions tab
+3. Verify `public/config.js` contains valid production values
+4. Review workflow logs in Actions tab
 
 **Solution:**
 

@@ -160,10 +160,13 @@ Pushing to `main` branch automatically triggers deployment to Firebase Hosting.
 
 **Required GitHub Secrets:**
 
-- `MAPBOX_ACCESS_TOKEN` - Your Mapbox public token
-- `FIREBASE_TOKEN` - Firebase CI token (get via `firebase login:ci`)
+- `FIREBASE_SERVICE_ACCOUNT` - Firebase service account JSON for deployment authentication
 
-See [CI/CD documentation](./docs/deployment/ci-cd-github-actions.md) for setup details.
+**Configuration source:**
+
+- Production config is read from committed `public/config.js` during CI builds.
+
+See [CI/CD documentation](./docs/deployment.md) for setup details.
 
 ## Data Sources
 

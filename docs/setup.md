@@ -471,7 +471,7 @@ If `node --version` shows < 18:
 
 Before going to production:
 
-- [ ] `config.js` not committed to Git
+- [ ] `public/config.js` contains only public frontend config (no private secrets)
 - [ ] Production Mapbox token has URL restrictions
 - [ ] postMessage origins restricted (in `main.js`)
 - [ ] No `console.log()` with sensitive data

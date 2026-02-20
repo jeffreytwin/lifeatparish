@@ -102,22 +102,18 @@ Automatically deploy to Firebase when pushing to `main` branch.
 
 ### Setup
 
-**1. Generate Firebase token:**
-
-```bash
-firebase login:ci
-```
-
-Copy the token from terminal output.
-
-**2. Add secrets to GitHub:**
+**1. Add secret to GitHub:**
 
 Go to GitHub repository → Settings → Secrets and variables → Actions
 
-Add two secrets:
+Add this required secret:
 
-- `FIREBASE_TOKEN` - Token from step 1
-- `MAPBOX_ACCESS_TOKEN` - Your production Mapbox token
+- `FIREBASE_SERVICE_ACCOUNT` - Firebase service account JSON (from Firebase Console → Project settings → Service accounts)
+
+**2. Ensure production config is committed:**
+
+- Confirm `public/config.js` has the production Mapbox token and Wix client ID.
+- Commit/push config changes before deployment.
 
 **3. Workflow file already exists:**
 
@@ -125,7 +121,6 @@ The repository includes `.github/workflows/deploy.yml` which:
 
 - Triggers on push to `main` branch
 - Runs `npm ci` to install dependencies
-- Creates `config.js` with Mapbox token from secrets and Wix Client ID
 - Runs `npm run build`
 - Deploys to Firebase Hosting
 
@@ -154,9 +149,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - Checkout code
-      - Setup Node.js 18
+      - Setup Node.js 20
       - Install dependencies
-      - Create config.js (with Mapbox token + Wix Client ID)
       - Build project
       - Deploy to Firebase
 ```
@@ -178,17 +172,13 @@ jobs:
 
 **Firebase deploy fails (permission error):**
 
-Token expired. Generate new token:
-
-```bash
-firebase login:ci
-```
-
-Update `FIREBASE_TOKEN` secret in GitHub.
+1. Generate a new Firebase service account key from Firebase Console.
+2. Update GitHub secret `FIREBASE_SERVICE_ACCOUNT`.
+3. Re-run workflow.
 
 **Build fails (missing config.js):**
 
-Check `MAPBOX_ACCESS_TOKEN` secret is set in GitHub.
+Check `public/config.js` exists in the repo and contains valid production values.
 
 **Workflow doesn't trigger:**
 
@@ -224,7 +214,7 @@ Before every deployment:
 
 ## Security Checklist
 
-- [ ] `config.js` not committed to Git
+- [ ] `public/config.js` contains only public frontend config (no private secrets)
 - [ ] Mapbox token has URL restrictions
 - [ ] postMessage origins restricted to production domains
 - [ ] No console.log() with sensitive data
@@ -279,6 +269,6 @@ firebase deploy --only hosting
 # View deployment history
 firebase hosting:releases:list
 
-# Generate CI token
-firebase login:ci
+# Validate workflow file
+cat .github/workflows/deploy.yml
 ```

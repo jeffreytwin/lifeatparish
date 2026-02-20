@@ -221,13 +221,13 @@ firebase deploy
 
 **GitHub Actions fails:**
 
-1. Generate new Firebase token: `firebase login:ci`
-2. Update GitHub secret `FIREBASE_TOKEN`
+1. Regenerate Firebase service account key in Firebase Console
+2. Update GitHub secret `FIREBASE_SERVICE_ACCOUNT`
 
 **Deployed site shows blank page:**
 
 1. Verify `firebase.json` has `"public": "dist"`
-2. Check `config.js` exists before building
+2. Check `public/config.js` is committed and has valid production values
 3. Browser console for errors
 
 ### Analytics Issues
