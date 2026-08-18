@@ -12,7 +12,7 @@ The neighborhood GeoJSON boundaries file is hosted in Wix Media Manager as `neig
 
 ```javascript
 export async function fetchNeighborhoodGeojson() {
-  const response = await fetch('https://d4ab3c8b-a6bd-41c2-be01-9df7d7d13631.usrfiles.com/ugd/d4ab3c_2ee50ed343dc4840ad74e76c82c08883.json');
+  const response = await fetch('https://d4ab3c8b-a6bd-41c2-be01-9df7d7d13631.usrfiles.com/ugd/d4ab3c_80b530e674514ac68a3450d40b8f3a9e.json');
   const neighborhoodData = await response.json();
   return neighborhoodData;
 }
@@ -53,6 +53,28 @@ export async function fetchNeighborhoodGeojson() {
 **Auto-added properties** (don't add manually):
 
 - `amenities`, `new_construction`, `has_resale_homes`, `house_count` - Added from Wix data
+
+### Adding a Neighborhood
+
+New polygons are staged in `data/new-neighborhoods.geojson` (a plain FeatureCollection, e.g. exported from [geojson.io](https://geojson.io)). Merge them into the hosted file with:
+
+```bash
+npm run merge:neighborhoods
+```
+
+The script downloads the current hosted GeoJSON, adds each staged feature (replacing an existing feature of the same `neighborhood` name), validates the geometry, and writes `neighborhoods.geojson.json` in the project root. Upload that file to Wix Media Manager under the existing filename to publish it.
+
+To merge against a local copy instead of the live file:
+
+```bash
+npm run merge:neighborhoods -- --source ./current.json --out ./neighborhoods.geojson.json
+```
+
+Drawing the polygon only puts the shape on the map. Everything shown for it comes from Wix:
+
+- The neighborhood needs a row in the `HousesforSale-DynamicPages` collection whose `villageTitle` matches the `neighborhood` name, or the details panel opens empty. If the names cannot match exactly, add an entry to `NEIGHBORHOOD_NAME_MAPPING` in `src/assets/js/modules/map.js` and `src/assets/js/modules/filters.js`.
+- The green "new construction" color and filter come from the neighborhood having floor plans in Wix, not from the `new_construction` property in the GeoJSON.
+- Price range, amenities and home specs are read from Wix listings and floor plans; the matching properties in the GeoJSON are ignored.
 
 ## Troubleshooting
 
