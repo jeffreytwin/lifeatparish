@@ -20,7 +20,7 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
 // Same URL the app fetches in src/assets/js/modules/map.js
 const LIVE_GEOJSON_URL =
-  'https://d4ab3c8b-a6bd-41c2-be01-9df7d7d13631.usrfiles.com/ugd/d4ab3c_80b530e674514ac68a3450d40b8f3a9e.json';
+  'https://d0be81f5-fa27-4985-8d7a-c11186072a81.usrfiles.com/ugd/d0be81_2d8e91016ad7419e89b2165d66e4dc48.json';
 
 function parseArgs(argv) {
   const args = { source: LIVE_GEOJSON_URL, additions: resolve(ROOT, 'data/new-neighborhoods.geojson'), out: resolve(ROOT, 'neighborhoods.geojson.json') };
