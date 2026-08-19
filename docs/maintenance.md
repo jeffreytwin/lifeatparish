@@ -6,7 +6,9 @@ Guide for updating neighborhood boundaries and troubleshooting common issues.
 
 ### Overview
 
-The neighborhood GeoJSON boundaries file is hosted in Wix Media Manager as `neighborhoods.geojson.json` (Wix supports `.json` but not `.geojson` extensions). To update, replace the file in Wix Media Manager with the same filename. The map updates automatically; no code changes needed. Just ensure the file follows the [GeoJSON specification](https://geojson.org/).
+The neighborhood GeoJSON boundaries file is hosted in Wix Media Manager as `neighborhoods.geojson.json` (Wix supports `.json` but not `.geojson` extensions). Ensure the file follows the [GeoJSON specification](https://geojson.org/).
+
+**Uploading a new version mints a new URL.** Wix stores each upload under its own `d4ab3c_<hash>.json` path, so keeping the filename does *not* keep the URL — the old URL keeps serving the old file, and the map keeps showing the old boundaries. After every upload, copy the new file URL from Media Manager into `fetchNeighborhoodGeojson()` in `src/assets/js/modules/map.js` and deploy. (Commit `25b2f8b` was exactly this fix.)
 
 **Current URL:** Configured in `src/assets/js/modules/map.js`
 
@@ -62,7 +64,11 @@ New polygons are staged in `data/new-neighborhoods.geojson` (a plain FeatureColl
 npm run merge:neighborhoods
 ```
 
-The script downloads the current hosted GeoJSON, adds each staged feature (replacing an existing feature of the same `neighborhood` name), validates the geometry, and writes `neighborhoods.geojson.json` in the project root. Upload that file to Wix Media Manager under the existing filename to publish it.
+The script downloads the current hosted GeoJSON, adds each staged feature (replacing an existing feature of the same `neighborhood` name), validates the geometry, and writes `neighborhoods.geojson.json` in the project root. To publish it:
+
+1. Upload the file to Wix Media Manager.
+2. Copy the uploaded file's URL from Media Manager and compare it to the one in `fetchNeighborhoodGeojson()`. If it changed — it usually does — update `src/assets/js/modules/map.js` and merge to `main` to deploy.
+3. Hard-refresh the map (the old URL stays cached in the browser and the CDN).
 
 To merge against a local copy instead of the live file:
 

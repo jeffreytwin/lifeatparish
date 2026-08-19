@@ -90,7 +90,7 @@ export async function fetchNeighborhoodGeojson() {
 }
 ```
 
-To update: Replace file in Wix Media Manager.
+To update: upload the new file to Wix Media Manager, then point the URL above at the uploaded file — each upload gets its own `d4ab3c_<hash>.json` path. See [maintenance](./maintenance.md).
 
 ## Wix API Configuration
 

@@ -4,7 +4,8 @@
  * The map reads its boundaries from a JSON file in Wix Media Manager, not from
  * this repo (see docs/maintenance.md). This script downloads that file, merges
  * in the features from data/new-neighborhoods.geojson, validates the result and
- * writes it to disk so it can be re-uploaded to Wix under the same filename.
+ * writes it to disk so it can be re-uploaded to Wix. Note that each Wix upload is
+ * served from its own URL, so the URL below has to be updated after every upload.
  *
  * Usage:
  *   npm run merge:neighborhoods
@@ -101,4 +102,8 @@ await writeFile(args.out, `${JSON.stringify(merged, null, 2)}\n`);
 
 console.log(`\n${current.features.length} features in → ${features.length} features out`);
 console.log(`wrote ${args.out}`);
-console.log('Upload this file to Wix Media Manager under the existing filename (neighborhoods.geojson.json) to publish it.');
+console.log('\nTo publish:');
+console.log('  1. Upload this file to Wix Media Manager as neighborhoods.geojson.json.');
+console.log('  2. Copy the uploaded file\'s URL from Media Manager — each upload gets its own d4ab3c_<hash>.json path,');
+console.log('     so it will differ from the URL above even though the filename matches.');
+console.log('  3. Put that URL in fetchNeighborhoodGeojson() in src/assets/js/modules/map.js and merge to main to deploy.');
