@@ -82,6 +82,17 @@ Drawing the polygon only puts the shape on the map. Everything shown for it come
 - The green "new construction" color and filter come from the neighborhood having floor plans in Wix, not from the `new_construction` property in the GeoJSON.
 - Price range, amenities and home specs are read from Wix listings and floor plans; the matching properties in the GeoJSON are ignored.
 
+### Embedded Map Shows an Old Version
+
+The map is embedded on lifeatparrish.com in an iframe pointing at `https://lifeatparrish.web.app/` (see `send-url-to-iframe.js`, which is a copy of the Velo page code that lives in the Wix editor). If the standalone site shows an update but the embed does not:
+
+1. In DevTools on the Wix page, right-click inside the map and choose **Reload frame** — a page-level hard refresh does not always revalidate an iframe.
+2. In the Network tab, check which `assets/index-<hash>.js` the iframe loads. An older hash than the current deploy means the iframe is running a cached `index.html`, not stale data.
+3. Check which GeoJSON URL that bundle requests, and confirm it matches `fetchNeighborhoodGeojson()` in `src/assets/js/modules/map.js`.
+4. Confirm the iframe `src` on the live Wix page really is `lifeatparrish.web.app` — the editor's iframe component can hold a different URL than the copy in this repo.
+
+`firebase.json` serves `index.html` and `config.js` with `Cache-Control: no-cache` so a deploy is picked up on the next load; the hashed files under `/assets` are immutable and cached for a year.
+
 ## Troubleshooting
 
 ### Map Issues
