@@ -85,12 +85,12 @@ Hosted in Wix Media Manager, loaded in `src/assets/js/modules/map.js`:
 
 ```javascript
 export async function fetchNeighborhoodGeojson() {
-  const response = await fetch('https://d4ab3c8b-a6bd-41c2-be01-9df7d7d13631.usrfiles.com/ugd/d4ab3c_2ee50ed343dc4840ad74e76c82c08883.json');
+  const response = await fetch('https://d4ab3c8b-a6bd-41c2-be01-9df7d7d13631.usrfiles.com/ugd/d4ab3c_80b530e674514ac68a3450d40b8f3a9e.json');
   return await response.json();
 }
 ```
 
-To update: Replace file in Wix Media Manager.
+To update: upload the new file to Wix Media Manager, then point the URL above at the uploaded file — each upload gets its own `d4ab3c_<hash>.json` path. See [maintenance](./maintenance.md).
 
 ## Wix API Configuration
 

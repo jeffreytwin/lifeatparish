@@ -401,7 +401,7 @@ Before deploying major changes:
 
 ```javascript
 export async function fetchNeighborhoodGeojson() {
-  const response = await fetch('https://d4ab3c8b-a6bd-41c2-be01-9df7d7d13631.usrfiles.com/ugd/d4ab3c_2ee50ed343dc4840ad74e76c82c08883.json');
+  const response = await fetch('https://d4ab3c8b-a6bd-41c2-be01-9df7d7d13631.usrfiles.com/ugd/d4ab3c_80b530e674514ac68a3450d40b8f3a9e.json');
   return await response.json();
 }
 ```
@@ -412,9 +412,8 @@ export async function fetchNeighborhoodGeojson() {
 2. **Save as** `neighborhoods.geojson.json` (Wix requires `.json` extension)
 3. **Upload to Wix Media Manager:**
    - Go to Wix Dashboard → Media Manager
-   - Replace existing file with same filename
-   - Keep the same filename to avoid code changes
-4. **Map updates automatically** - no code changes needed
+   - Upload the new file
+4. **Update the URL in the code** - each upload gets its own `d4ab3c_<hash>.json` path, so the URL changes even when the filename does not. Copy the uploaded file's URL from Media Manager into `fetchNeighborhoodGeojson()` in `src/assets/js/modules/map.js` and merge to `main` to deploy.
 
 **GeoJSON Requirements:**
 
